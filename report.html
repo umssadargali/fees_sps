@@ -3,11 +3,14 @@
 <head>
     <base target="_top">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
         :root { --p: #1a237e; --bg: #f4f7f6; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 950px; margin: auto; }
-        .filter-row { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; align-items: flex-end; background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        .filter-row { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; align-items: flex-end; background: #f8f9fa; padding: 15px; border-radius: 8px; flex-wrap: wrap; }
         .f-group { display: flex; flex-direction: column; }
         label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 5px; }
         select, input { padding: 10px; border-radius: 6px; border: 1px solid #ccc; outline: none; }
@@ -18,7 +21,7 @@
         th { background: var(--p); color: white; padding: 12px; border: 1px solid #ddd; }
         td { padding: 10px; border: 1px solid #ddd; background: #fff; text-align: center; }
         .btn-show { background: var(--p); color: white; border: none; padding: 11px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-show:active { transform: scale(0.98); }
+        .btn-pdf { background: #e67e22; color: white; border: none; padding: 11px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 10px; display: none; }
     </style>
 </head>
 <body>
@@ -41,6 +44,7 @@
             <input type="date" id="dateInput">
         </div>
         <button class="btn-show" onclick="loadReport()">SHOW REPORT</button>
+        <button id="pdfBtn" class="btn-pdf" onclick="downloadPDF()">DOWNLOAD PDF 📄</button>
     </div>
 
     <div class="stats">
@@ -50,39 +54,30 @@
     </div>
 
     <div class="t-wrap">
-        <table>
+        <table id="reportTable">
             <thead>
                 <tr>
                     <th>ID</th><th>Name</th><th>Class</th><th>Sub Total</th><th>Paid</th><th>Bal</th>
                 </tr>
             </thead>
             <tbody id="reportTableBody">
-                <tr><td colspan="6" style="padding:20px; color:#666;">Select filters and click Show Report</td></tr>
+                <tr><td colspan="6" style="padding:20px; color:#666;">Select filters and click Show</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // Aapka naya Web App URL
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLK7x1LSLSzKqPiQOBT1-3h1SyG8hqmRAOoUdzJaYJ8s4MRQGPzv4Uf2c_yJreh-41/exec";
 
     async function loadReport() {
         let selectedMonth = document.getElementById('monthInput').value;
         let selectedDate = document.getElementById('dateInput').value; 
-        
-        let formattedDate = "";
-        let altDate = "";
+        let formattedDate = selectedDate ? selectedDate.split("-").reverse().join("/") : "";
+        let altDate = selectedDate ? selectedDate.split("-").reverse().map(x => parseInt(x)).join("/") : "";
 
-        if(selectedDate) {
-            let d = selectedDate.split("-");
-            // Standard format: 24/03/2026
-            formattedDate = `${d[2]}/${d[1]}/${d[0]}`; 
-            // Alt format for single digits: 24/3/2026
-            altDate = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`; 
-        }
-
-        document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6'>Searching... Please wait</td></tr>";
+        document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6'>Searching...</td></tr>";
+        document.getElementById('pdfBtn').style.display = 'none';
 
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getReportData&month=${selectedMonth}`);
@@ -91,22 +86,11 @@
             let html = "";
             let sD = 0, sP = 0, sB = 0;
 
-            if (!data.rows || data.rows.length === 0) {
-                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:orange;'>Is mahine ka koi record nahi mila.</td></tr>";
-                updateStats(0, 0, 0);
-                return;
-            }
-
             data.rows.forEach(r => {
                 let showRow = true;
-                
-                // Date Matching Logic
                 if(selectedDate !== "") {
-                    // Check both backend date properties
                     let rowDate = r.date || r["Paid Date"] || r["Date"] || "";
-                    if(rowDate !== formattedDate && rowDate !== altDate && rowDate !== selectedDate) {
-                        showRow = false;
-                    }
+                    if(rowDate !== formattedDate && rowDate !== altDate && rowDate !== selectedDate) showRow = false;
                 }
 
                 if(showRow) {
@@ -114,28 +98,24 @@
                         <td>${r.id}</td>
                         <td style="text-align:left; color:blue; font-weight:bold;">${r.name}</td>
                         <td>${r.class}</td>
-                        <td>₹${r.dues}</td>
-                        <td style="color:green; font-weight:bold;">₹${r.paid}</td>
-                        <td style="color:red; font-weight:bold;">₹${r.bal}</td>
+                        <td>${r.dues}</td>
+                        <td style="color:green; font-weight:bold;">${r.paid}</td>
+                        <td style="color:red; font-weight:bold;">${r.bal}</td>
                     </tr>`;
-                    
-                    sD += parseFloat(r.dues || 0);
-                    sP += parseFloat(r.paid || 0);
-                    sB += parseFloat(r.bal || 0);
+                    sD += parseFloat(r.dues || 0); sP += parseFloat(r.paid || 0); sB += parseFloat(r.bal || 0);
                 }
             });
 
             if(html === "") {
-                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:orange;'>Is Taarikh ka koi data nahi mila.</td></tr>";
-                updateStats(0, 0, 0);
+                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:orange;'>Data nahi mila.</td></tr>";
+                updateStats(0,0,0);
             } else {
                 document.getElementById('reportTableBody').innerHTML = html;
                 updateStats(sD, sP, sB);
+                document.getElementById('pdfBtn').style.display = 'inline-block';
             }
-
         } catch (e) {
-            console.error(e);
-            document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:red'>Error: Data fetch nahi ho paya. URL ya Internet check karein.</td></tr>";
+            document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:red'>Fetch Error!</td></tr>";
         }
     }
 
@@ -143,6 +123,29 @@
         document.getElementById('totalD').innerText = "₹" + d;
         document.getElementById('totalP').innerText = "₹" + p;
         document.getElementById('totalB').innerText = "₹" + b;
+    }
+
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let month = document.getElementById('monthInput').value;
+        let date = document.getElementById('dateInput').value || "Full Month";
+
+        doc.setFontSize(18);
+        doc.text("SAGAR PUBLIC SCHOOL - Fee Report", 14, 15);
+        doc.setFontSize(11);
+        doc.text(`Report for: ${month} (${date})`, 14, 22);
+        doc.text(`Total Paid: ${document.getElementById('totalP').innerText}`, 14, 28);
+
+        doc.autoTable({
+            html: '#reportTable',
+            startY: 35,
+            theme: 'grid',
+            headStyles: { fillColor: [26, 35, 126] },
+            styles: { fontSize: 9 }
+        });
+
+        doc.save(`Report_${month}_${date}.pdf`);
     }
 </script>
 </body>
