@@ -6,20 +6,22 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { --p: #1a237e; --bg: #f4f7f6; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         
-        /* Search & List UI */
-        .container { max-width: 500px; margin: 20px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
-        .btn-search { width: 100%; padding: 12px; background: var(--p); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
+        /* Dashboard Styles */
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .header-box { text-align: center; margin-bottom: 20px; color: var(--p); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-card { padding: 15px; border-radius: 8px; text-align: center; color: white; font-weight: bold; }
+        .blue { background: #3949ab; } .green { background: #43a047; } .red { background: #e53935; }
         
-        /* Month Card Design */
-        .month-card { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .month-info h4 { margin: 0; color: #333; font-size: 16px; }
-        .month-info p { margin: 2px 0 0; font-size: 12px; color: #666; }
-        .btn-view { background: var(--p); color: white; border: none; padding: 8px 15px; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: 600; }
+        /* Table Styles */
+        .report-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        .report-table th { background: var(--p); color: white; padding: 10px; position: sticky; top: 0; }
+        .report-table td { padding: 8px; border-bottom: 1px solid #ddd; text-align: center; }
+        .student-link { color: blue; text-decoration: underline; cursor: pointer; font-weight: bold; }
 
-        /* RECEIPT MODAL (PINK DESIGN) */
+        /* PINK RECEIPT MODAL CSS (SAME AS SEARCH) */
         #receipt-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 20px; }
         .print-wrapper { display: flex; justify-content: space-between; gap: 20px; width: 100%; max-width: 1100px; margin: 0 auto; }
         .receipt-box { flex: 1; background: #ffdae9; border: 2px solid #000; padding: 15px; color: #000; font-family: Arial, sans-serif; min-height: 500px; }
@@ -44,9 +46,34 @@
 <body>
 
 <div class="container no-print">
-    <input type="text" id="sid" placeholder="Enter Student ID (e.g. 5)">
-    <button class="btn-search" onclick="doSearch()">SEARCH RECORDS</button>
-    <div id="resultsList"></div>
+    <div class="header-box"><h2>Monthly Collection Report</h2></div>
+    
+    <div style="display:flex; gap:10px; margin-bottom:20px; justify-content: center;">
+        <select id="monthSelect" style="padding:10px; border-radius:5px;">
+            <option>January</option><option>February</option><option>March</option>
+            <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
+        </select>
+        <button onclick="fetchReport()" style="padding:10px 30px; background:var(--p); color:white; border:none; border-radius:5px; cursor:pointer;">SHOW</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card blue">Total Sub-Total<br><span id="total-sub">₹0</span></div>
+        <div class="stat-card green">Total Paid<br><span id="total-paid">₹0</span></div>
+        <div class="stat-card red">Remaining<br><span id="total-rem">₹0</span></div>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Name</th><th>Class</th><th>Sub-Total</th><th>Paid</th><th>Balance</th>
+                </tr>
+            </thead>
+            <tbody id="report-body"></tbody>
+        </table>
+    </div>
 </div>
 
 <div id="receipt-modal">
@@ -56,47 +83,52 @@
     </div>
     <div class="no-print" style="text-align:center; margin-top:20px;">
         <button onclick="window.print()" style="padding:12px 40px; background:green; color:white; border:none; border-radius:6px; font-weight:bold;">PRINT BOTH COPIES</button>
-        <button onclick="closeReceipt()" style="padding:12px 40px; background:#666; color:white; border:none; border-radius:6px; margin-left:10px;">BACK TO LIST</button>
+        <button onclick="closeReceipt()" style="padding:12px 40px; background:#666; color:white; border:none; border-radius:6px; margin-left:10px;">BACK TO REPORT</button>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLK7x1LSLSzKqPiQOBT1-3h1SyG8hqmRAOoUdzJaYJ8s4MRQGPzv4Uf2c_yJreh-41/exec";
-    let allRecords = [];
+    let reportData = [];
 
-    async function doSearch() {
-        var id = document.getElementById('sid').value;
-        if(!id) return;
+    async function fetchReport() {
+        const m = document.getElementById('monthSelect').value;
+        Swal.fire({title: 'Loading Report...', didOpen: () => Swal.showLoading()});
         
-        document.getElementById('resultsList').innerHTML = "Searching...";
         try {
-            const response = await fetch(`${SCRIPT_URL}?action=searchData&id=${id}`);
-            allRecords = await response.json();
+            const res = await fetch(`${SCRIPT_URL}?action=getReport&month=${m}`);
+            reportData = await res.json();
             
-            if(allRecords.length === 0) {
-                document.getElementById('resultsList').innerHTML = "No records found.";
-                return;
-            }
-
             let html = "";
-            allRecords.reverse().forEach((record, index) => {
-                html += `
-                <div class="month-card">
-                    <div class="month-info">
-                        <h4>${record.Month || 'No Month'}</h4>
-                        <p>${record["Student Name"]} | Paid: ₹${record["Total Paid"]}</p>
-                    </div>
-                    <button class="btn-view" onclick="viewReceipt(${index})">View Receipt</button>
-                </div>`;
+            let tSub = 0, tPaid = 0, tRem = 0;
+            
+            reportData.forEach((row, index) => {
+                let sub = parseFloat(row["Sub Total"] || 0);
+                let paid = parseFloat(row["Total Paid"] || 0);
+                let rem = parseFloat(row["Remaining"] || 0);
+                
+                tSub += sub; tPaid += paid; tRem += rem;
+                
+                html += `<tr>
+                    <td>${row["Student Id"]}</td>
+                    <td><span class="student-link" onclick="openReceipt(${index})">${row["Student Name"]}</span></td>
+                    <td>${row["Class"]}</td>
+                    <td>₹${sub}</td>
+                    <td style="color:blue; font-weight:bold;">₹${paid}</td>
+                    <td style="color:red; font-weight:bold;">₹${rem}</td>
+                </tr>`;
             });
-            document.getElementById('resultsList').innerHTML = html;
-        } catch (e) {
-            document.getElementById('resultsList').innerHTML = "Error fetching data.";
-        }
+            
+            document.getElementById('report-body').innerHTML = html;
+            document.getElementById('total-sub').innerText = "₹" + tSub;
+            document.getElementById('total-paid').innerText = "₹" + tPaid;
+            document.getElementById('total-rem').innerText = "₹" + tRem;
+            Swal.close();
+        } catch(e) { Swal.fire('Error', 'Data load failed', 'error'); }
     }
 
-    function viewReceipt(index) {
-        const d = allRecords[index];
+    function openReceipt(index) {
+        const d = reportData[index];
         document.getElementById('guardian-copy').innerHTML = generateReceiptHTML(d, "Guardian's Copy");
         document.getElementById('office-copy').innerHTML = generateReceiptHTML(d, "Office Copy");
         document.getElementById('receipt-modal').style.display = 'block';
@@ -108,6 +140,7 @@
         document.querySelector('.container').style.display = 'block';
     }
 
+    // Number to Words Logic
     function numberToWords(num) {
         if (!num || isNaN(num)) return "Zero";
         var a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
