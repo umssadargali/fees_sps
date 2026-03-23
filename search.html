@@ -6,38 +6,36 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { --p: #1a237e; --bg: #f4f7f6; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         
-        /* Dashboard Styles */
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .header-box { text-align: center; margin-bottom: 20px; color: var(--p); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-card { padding: 15px; border-radius: 8px; text-align: center; color: white; font-weight: bold; }
-        .blue { background: #3949ab; } .green { background: #43a047; } .red { background: #e53935; }
+        /* Search Box & Card UI */
+        .container { max-width: 500px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input[type="text"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; outline: none; }
+        .btn-search { width: 100%; padding: 12px; background: var(--p); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
         
-        /* Table Styles */
-        .report-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        .report-table th { background: var(--p); color: white; padding: 10px; position: sticky; top: 0; }
-        .report-table td { padding: 8px; border-bottom: 1px solid #ddd; text-align: center; }
-        .student-link { color: blue; text-decoration: underline; cursor: pointer; font-weight: bold; }
+        .month-card { background: #fff; border-left: 5px solid var(--p); border-radius: 8px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .month-info h4 { margin: 0; color: #333; }
+        .month-info p { margin: 2px 0 0; font-size: 13px; color: #666; }
+        .btn-view { background: #e91e63; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 12px; }
 
-        /* PINK RECEIPT MODAL CSS (SAME AS SEARCH) */
-        #receipt-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 20px; }
-        .print-wrapper { display: flex; justify-content: space-between; gap: 20px; width: 100%; max-width: 1100px; margin: 0 auto; }
-        .receipt-box { flex: 1; background: #ffdae9; border: 2px solid #000; padding: 15px; color: #000; font-family: Arial, sans-serif; min-height: 500px; }
-        .r-header { text-align: center; }
+        /* EXACT PINK RECEIPT MODAL CSS */
+        #receipt-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 15px; }
+        .print-wrapper { display: flex; justify-content: space-between; gap: 10px; width: 100%; max-width: 1200px; margin: 0 auto; }
+        .receipt-box { flex: 1; background: #ffdae9; border: 1.5px solid #000; padding: 12px; color: #000; font-family: 'Arial Narrow', Arial, sans-serif; min-height: 580px; position: relative; }
+        .r-header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px; }
         .r-header h2 { margin: 0; font-size: 18px; font-weight: 900; }
-        .r-header p { margin: 1px; font-size: 9px; font-weight: bold; }
-        .top-info { display: flex; justify-content: space-between; font-size: 10px; margin-top: 5px; border-bottom: 1px solid #000; padding-bottom: 2px; }
-        .copy-tag { background: #000; color: #fff; padding: 2px 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; border-radius: 3px; }
-        .student-details { display: grid; grid-template-columns: 1fr 1fr; font-size: 10px; margin-top: 8px; line-height: 1.5; }
-        .r-table { width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000; }
-        .r-table th, .r-table td { border: 1px solid #000; padding: 3px; font-size: 10px; text-align: center;}
-        .words-section { border-bottom: 1px dotted #000; padding: 3px 0; font-size: 10px; margin-top: 5px; font-style: italic; }
-        .footer-sigs { display: flex; justify-content: space-between; margin-top: 30px; font-size: 10px; font-weight: bold; }
+        .r-header p { margin: 0; font-size: 9px; font-weight: bold; }
+        .top-info { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 5px; }
+        .copy-tag { border: 1px solid #000; padding: 1px 6px; font-size: 9px; font-weight: bold; text-transform: uppercase; }
+        .student-details { display: grid; grid-template-columns: 1.2fr 1fr; font-size: 10px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 5px 0; line-height: 1.4; margin-bottom: 5px; }
+        .r-table { width: 100%; border-collapse: collapse; }
+        .r-table th, .r-table td { border: 0.5px solid #000; padding: 2px 4px; font-size: 10px; text-align: center; }
+        .r-table td.left { text-align: left; }
+        .sub-item { padding-left: 15px !important; font-style: italic; }
+        .footer-sigs { display: flex; justify-content: space-between; margin-top: 25px; font-size: 10px; font-weight: bold; }
 
         @media print { 
-            @page { size: A4 landscape; margin: 5mm; }
+            @page { size: A4 landscape; margin: 3mm; }
             .no-print { display: none !important; } 
             #receipt-modal { position: absolute; top:0; left:0; width:100%; display: block !important; padding: 0; }
         }
@@ -46,34 +44,10 @@
 <body>
 
 <div class="container no-print">
-    <div class="header-box"><h2>Monthly Collection Report</h2></div>
-    
-    <div style="display:flex; gap:10px; margin-bottom:20px; justify-content: center;">
-        <select id="monthSelect" style="padding:10px; border-radius:5px;">
-            <option>January</option><option>February</option><option>March</option>
-            <option>April</option><option>May</option><option>June</option>
-            <option>July</option><option>August</option><option>September</option>
-            <option>October</option><option>November</option><option>December</option>
-        </select>
-        <button onclick="fetchReport()" style="padding:10px 30px; background:var(--p); color:white; border:none; border-radius:5px; cursor:pointer;">SHOW</button>
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card blue">Total Sub-Total<br><span id="total-sub">₹0</span></div>
-        <div class="stat-card green">Total Paid<br><span id="total-paid">₹0</span></div>
-        <div class="stat-card red">Remaining<br><span id="total-rem">₹0</span></div>
-    </div>
-
-    <div style="overflow-x:auto;">
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th>ID</th><th>Name</th><th>Class</th><th>Sub-Total</th><th>Paid</th><th>Balance</th>
-                </tr>
-            </thead>
-            <tbody id="report-body"></tbody>
-        </table>
-    </div>
+    <h2 style="text-align:center; color:var(--p); font-size:18px;">Student Fee Record</h2>
+    <input type="text" id="sid" placeholder="Enter Student ID (e.g. 13)">
+    <button class="btn-search" onclick="doSearch()">SEARCH ALL MONTHS</button>
+    <div id="resultsList"></div>
 </div>
 
 <div id="receipt-modal">
@@ -81,56 +55,49 @@
         <div class="receipt-box" id="guardian-copy"></div>
         <div class="receipt-box" id="office-copy"></div>
     </div>
-    <div class="no-print" style="text-align:center; margin-top:20px;">
-        <button onclick="window.print()" style="padding:12px 40px; background:green; color:white; border:none; border-radius:6px; font-weight:bold;">PRINT BOTH COPIES</button>
-        <button onclick="closeReceipt()" style="padding:12px 40px; background:#666; color:white; border:none; border-radius:6px; margin-left:10px;">BACK TO REPORT</button>
+    <div class="no-print" style="text-align:center; margin-top:20px; padding-bottom: 30px;">
+        <button onclick="window.print()" style="padding:12px 35px; background:green; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">PRINT BOTH COPIES</button>
+        <button onclick="closeReceipt()" style="padding:12px 35px; background:#666; color:white; border:none; border-radius:6px; margin-left:10px; cursor:pointer;">BACK TO LIST</button>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLK7x1LSLSzKqPiQOBT1-3h1SyG8hqmRAOoUdzJaYJ8s4MRQGPzv4Uf2c_yJreh-41/exec";
-    let reportData = [];
+    let allRecords = [];
 
-    async function fetchReport() {
-        const m = document.getElementById('monthSelect').value;
-        Swal.fire({title: 'Loading Report...', didOpen: () => Swal.showLoading()});
+    async function doSearch() {
+        var id = document.getElementById('sid').value;
+        if(!id) return Swal.fire('Error', 'Please enter ID', 'error');
         
+        document.getElementById('resultsList').innerHTML = "<p style='text-align:center'>Searching...</p>";
         try {
-            const res = await fetch(`${SCRIPT_URL}?action=getReport&month=${m}`);
-            reportData = await res.json();
+            const response = await fetch(`${SCRIPT_URL}?action=searchData&id=${id}`);
+            allRecords = await response.json();
             
+            if(!allRecords.length) {
+                document.getElementById('resultsList').innerHTML = "<p style='color:red'>No records found!</p>";
+                return;
+            }
+
             let html = "";
-            let tSub = 0, tPaid = 0, tRem = 0;
-            
-            reportData.forEach((row, index) => {
-                let sub = parseFloat(row["Sub Total"] || 0);
-                let paid = parseFloat(row["Total Paid"] || 0);
-                let rem = parseFloat(row["Remaining"] || 0);
-                
-                tSub += sub; tPaid += paid; tRem += rem;
-                
-                html += `<tr>
-                    <td>${row["Student Id"]}</td>
-                    <td><span class="student-link" onclick="openReceipt(${index})">${row["Student Name"]}</span></td>
-                    <td>${row["Class"]}</td>
-                    <td>₹${sub}</td>
-                    <td style="color:blue; font-weight:bold;">₹${paid}</td>
-                    <td style="color:red; font-weight:bold;">₹${rem}</td>
-                </tr>`;
+            allRecords.reverse().forEach((record, index) => {
+                html += `
+                <div class="month-card">
+                    <div class="month-info">
+                        <h4>${record.Month || 'No Month'}</h4>
+                        <p>Paid: ₹${record["Total Paid"]} | Date: ${record["Paid Date"] || 'N/A'}</p>
+                    </div>
+                    <button class="btn-view" onclick="viewReceipt(${index})">VIEW RECEIPT</button>
+                </div>`;
             });
-            
-            document.getElementById('report-body').innerHTML = html;
-            document.getElementById('total-sub').innerText = "₹" + tSub;
-            document.getElementById('total-paid').innerText = "₹" + tPaid;
-            document.getElementById('total-rem').innerText = "₹" + tRem;
-            Swal.close();
-        } catch(e) { Swal.fire('Error', 'Data load failed', 'error'); }
+            document.getElementById('resultsList').innerHTML = html;
+        } catch (e) { document.getElementById('resultsList').innerHTML = "Error!"; }
     }
 
-    function openReceipt(index) {
-        const d = reportData[index];
-        document.getElementById('guardian-copy').innerHTML = generateReceiptHTML(d, "Guardian's Copy");
-        document.getElementById('office-copy').innerHTML = generateReceiptHTML(d, "Office Copy");
+    function viewReceipt(index) {
+        const d = allRecords[index];
+        document.getElementById('guardian-copy').innerHTML = renderHTML(d, "GUARDIAN'S COPY");
+        document.getElementById('office-copy').innerHTML = renderHTML(d, "OFFICE COPY");
         document.getElementById('receipt-modal').style.display = 'block';
         document.querySelector('.container').style.display = 'none';
     }
@@ -140,57 +107,66 @@
         document.querySelector('.container').style.display = 'block';
     }
 
-    // Number to Words Logic
-    function numberToWords(num) {
-        if (!num || isNaN(num)) return "Zero";
-        var a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
-        var b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
-        var n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-        if (!n) return ''; var str = '';
-        str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
-        str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
-        str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
-        str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
-        str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
-        return str.trim();
-    }
+    function renderHTML(d, type) {
+        // EXACT ITEM LIST MAPPING FROM YOUR SCREENSHOT
+        const items = [
+            {n: "Prev. Dues", v: d["Prev Dues"]},
+            {n: "Admission Fee", v: d["Admission Fee"]},
+            {n: "School Fee", v: d["School Fee"]},
+            {n: "School Van Fee", v: d["School Van Fee"]},
+            {n: "Hostel & School Fee", v: d["Hostel & School Fee"]},
+            {n: "Exam Fee", v: d["Exam Fee"]},
+            {n: "<b>School Uniform Fee</b>", v: ""},
+            {n: "(i) Shirts", v: d["Shirts"], s: true},
+            {n: "(ii) Pants", v: d["Pants"], s: true},
+            {n: "(iii) T-Shirts", v: d["T-Shirts"], s: true},
+            {n: "(iv) Trousers", v: d["Trousers"], s: true},
+            {n: "<b>School Books</b>", v: ""},
+            {n: "(i) Books Fee", v: d["Books Fee"], s: true},
+            {n: "(ii) Copies", v: d["Copies"], s: true},
+            {n: "(iii) Cover", v: d["Cover"], s: true},
+            {n: "(iv) Instrument Box", v: d["Instrument Box"], s: true},
+            {n: "School Bag", v: d["School Bag"]},
+            {n: "Development Fee", v: d["Development Fee"]},
+            {n: "Other Fee", v: d["Other Fee"]}
+        ];
 
-    function generateReceiptHTML(d, type) {
-        let sl = 1; let rows = "";
-        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Discount","Total Paid","Total Dues","Remaining","Paid Date","Sub Total"];
-        
-        Object.keys(d).forEach(key => {
-            if(!exclude.includes(key) && d[key] && parseFloat(d[key]) > 0) {
-                rows += `<tr><td>${sl++}.</td><td align="left">${key}</td><td>1</td><td>${d[key]}</td></tr>`;
+        let rows = ""; let sl = 1;
+        items.forEach(item => {
+            let val = parseFloat(item.v);
+            if((val && val > 0) || (item.n.includes("<b>"))) {
+                rows += `<tr>
+                    <td>${item.s || item.n.includes("<b>") ? "" : sl++}</td>
+                    <td class="left ${item.s ? 'sub-item' : ''}">${item.n}</td>
+                    <td>${val > 0 ? "1" : ""}</td>
+                    <td>${val > 0 ? val : ""}</td>
+                </tr>`;
             }
         });
 
-        const getSub = d["Sub Total"] || (parseFloat(d["Total Paid"] || 0) + parseFloat(d["Remaining"] || 0));
-
         return `
             <div class="r-header">
-                <div style="display:flex; justify-content:space-between;"><span class="copy-tag">${type}</span><span style="font-size:9px">UDISE: 10101122703</span></div>
+                <div style="display:flex; justify-content:space-between;"><span class="copy-tag">${type}</span><span>UDISE: 10101122703</span></div>
                 <h2>SAGAR PUBLIC SCHOOL</h2>
-                <p>QUAZITOLA, BARSOI (KATIHAR)</p>
-                <p style="font-size:8px">RTE Reg No.21211472023218114225 | UDISE No.10101122703</p>
+                <p>BARSOI, KATIHAR, BIHAR</p>
+                <p style="font-size:7px">email: sagarpublicschool2023@gmail.com</p>
             </div>
             <div class="top-info"><span>Sl: A-${Math.floor(1000 + Math.random()*9000)}</span><span>Date: ${d["Paid Date"] || ""}</span></div>
             <div class="student-details">
                 <div><b>Name:</b> ${d["Student Name"]}</div><div><b>ID:</b> ${d["Student Id"]}</div>
                 <div><b>Father:</b> ${d["Father Name"]}</div><div><b>Class:</b> ${d["Class"]}</div>
-                <div><b>Address:</b> ${d["Address"]}</div><div><b>Month:</b> ${d["Month"]}</div>
+                <div><b>Address:</b> ${d["Address"] || "Barsoi"}</div><div><b>Month:</b> ${d["Month"]}</div>
             </div>
             <table class="r-table">
                 <thead><tr><th width="30">Sl.</th><th>Description</th><th width="30">Qty</th><th width="60">Amount</th></tr></thead>
                 <tbody>${rows}</tbody>
                 <tfoot>
-                    <tr><th colspan="3" align="right">Sub Total</th><td>${getSub}</td></tr>
-                    <tr><th colspan="3" align="right">Discount (-)</th><td>${d["Discount"] || 0}</td></tr>
-                    <tr><th colspan="3" align="right">Net Paid</th><td><b>${d["Total Paid"]}</b></td></tr>
-                    <tr><th colspan="3" align="right">Due Balance</th><td style="color:red"><b>${d["Remaining"] || 0}</b></td></tr>
+                    <tr><td colspan="3" align="right"><b>Sub Total</b></td><td>${d["Sub Total"]}</td></tr>
+                    <tr><td colspan="3" align="right"><b>Paid</b></td><td><b>${d["Total Paid"]}</b></td></tr>
+                    <tr><td colspan="3" align="right"><b>Due</b></td><td style="color:red"><b>${d["Remaining"]}</b></td></tr>
                 </tfoot>
             </table>
-            <div class="words-section"><b>Words:</b> ${numberToWords(d["Total Paid"])} Only.</div>
+            <div style="font-size:9px; margin-top:5px; border-bottom:1px dotted #000"><b>Words:</b> ${d["Total Paid"]} Only.</div>
             <div class="footer-sigs"><span>Parent Signature</span><span>Authorized Signature</span></div>
         `;
     }
