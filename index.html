@@ -9,28 +9,28 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-top: 50px; }
         .nav { background: var(--p); padding: 10px; position: fixed; top: 0; width: 100%; z-index: 1000; text-align: center; color: white; font-weight: bold; }
         .container { max-width: 550px; margin: 10px auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        
         .section-title { background: #eee; padding: 5px 10px; font-weight: bold; margin-top: 15px; border-left: 4px solid var(--p); font-size: 13px; }
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
         label { font-size: 11px; font-weight: bold; color: #444; margin-bottom: 2px; display: block; }
         input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
-
-        .fee-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 12px; }
-        .fee-table th { background: #f1f1f1; border: 1px solid #ddd; padding: 5px; }
-        .fee-table td { border: 1px solid #ddd; padding: 5px; text-align: center; }
-        .fee-table input { width: 100%; border: none; text-align: center; }
-        
-        .add-controls { display: flex; gap: 5px; margin: 5px 0; }
-        .btn-add { background: var(--p); color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 11px; }
-
         .total-box { background: #fff9c4; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #fbc02d; }
-        .calc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
         .btn-save { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 15px; cursor: pointer; font-size: 16px; }
 
+        /* PROFESSIONAL RECEIPT STYLES */
         #receipt-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 10px; }
-        .receipt-box { max-width: 480px; margin: 0 auto; background: #ffdae9; border: 2px solid #000; padding: 15px; color: #000; position: relative;}
+        .receipt-box { max-width: 500px; margin: 0 auto; background: #ffdae9; border: 2px solid #000; padding: 20px; color: #000; font-family: Arial, sans-serif; }
+        .r-header { text-align: center; margin-bottom: 10px; }
+        .r-header h2 { margin: 0; font-size: 22px; text-transform: uppercase; }
+        .r-header p { margin: 2px; font-size: 12px; font-weight: bold; }
+        .r-meta { display: grid; grid-template-columns: 1fr 1fr; font-size: 13px; line-height: 1.6; margin-top: 10px; border-top: 1px solid #000; padding-top: 5px; }
         .r-table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #000; }
-        .r-table th, .r-table td { border: 1px solid #000; padding: 5px; font-size: 12px; text-align: left; }
+        .r-table th, .r-table td { border: 1px solid #000; padding: 6px; font-size: 13px; text-align: left; }
+        .r-table th { background: rgba(0,0,0,0.05); }
+        .r-footer-table { width: 100%; border-collapse: collapse; border: 1px solid #000; border-top: none; }
+        .r-footer-table td { padding: 6px; font-size: 13px; border: 1px solid #000; }
+        .words-section { font-size: 12px; font-style: italic; margin-top: 10px; border-bottom: 1px dotted #000; padding-bottom: 5px; }
+        .sig-box { display: flex; justify-content: space-between; margin-top: 40px; font-size: 12px; font-weight: bold; }
+        
         @media print { .no-print { display: none !important; } #receipt-modal { position: absolute; top:0; left:0; width:100%; } }
     </style>
 </head>
@@ -54,92 +54,77 @@
     </div>
     <div><label>Address</label><input type="text" id="Address"></div>
 
-    <div class="section-title">Regular Fees</div>
+    <div class="section-title">Fee Details</div>
     <div class="grid-row">
         <div><label>Prev Dues</label><input type="number" class="calc-total" id="Prev Dues"></div>
         <div><label>Admission Fee</label><input type="number" class="calc-total" id="Admission Fee"></div>
     </div>
     <div class="grid-row">
         <div><label>School Fee</label><input type="number" class="calc-total" id="School Fee"></div>
-        <div><label>School Van Fee</label><input type="number" class="calc-total" id="School Van Fee"></div>
+        <div><label>Hostel Fee</label><input type="number" class="calc-total" id="Hostel & School Fee"></div>
     </div>
-    <div class="grid-row">
-        <div><label>Hostel & School Fee</label><input type="number" class="calc-total" id="Hostel & School Fee"></div>
-        <div><label>Exam Fee</label><input type="number" class="calc-total" id="Exam Fee"></div>
+    
+    <div class="grid-row" style="margin-top:10px;">
+        <div>
+            <label>Uniform Items</label>
+            <select id="uni-drop" onchange="addDynamic(this, 'uni')"></select>
+        </div>
+        <div>
+            <label>Book Items</label>
+            <select id="book-drop" onchange="addDynamic(this, 'book')"></select>
+        </div>
     </div>
-
-    <div class="section-title">6. School Uniform Fee</div>
-    <div class="add-controls">
-        <select id="uni-dropdown"><option value="">Loading...</option></select>
-        <button class="btn-add" onclick="addRow('uni')">ADD</button>
-    </div>
-    <table class="fee-table">
-        <tbody id="uni-body"></tbody>
-    </table>
-
-    <div class="section-title">7. School Books</div>
-    <div class="add-controls">
-        <select id="book-dropdown"><option value="">Loading...</option></select>
-        <button class="btn-add" onclick="addRow('book')">ADD</button>
-    </div>
-    <table class="fee-table">
-        <tbody id="book-body"></tbody>
-    </table>
-
-    <div class="section-title">Other Fees</div>
-    <div class="grid-row">
-        <div><label>School Bag</label><input type="number" class="calc-total" id="School Bag"></div>
-        <div><label>Development Fee</label><input type="number" class="calc-total" id="Development Fee"></div>
-    </div>
+    <div id="dynamic-rows"></div>
 
     <div class="total-box">
-        <div class="calc-grid">
-            <div><label>Sub Total</label><input type="number" id="sub_total" readonly style="background:#eee"></div>
+        <div class="grid-row">
+            <div><label>Sub Total</label><input type="number" id="sub_t" readonly></div>
             <div><label>Discount</label><input type="number" id="Discount" oninput="calculate()" value="0"></div>
-            <div><label>Net Payable</label><input type="number" id="net_payable" readonly style="background:#eee; color:green; font-weight:bold;"></div>
         </div>
-        <div style="margin-top:15px;">
-            <label style="color:blue">PAID AMOUNT (Cash Deposit) ₹</label>
-            <input type="number" id="Total Paid" oninput="calculate()" style="font-size: 22px; font-weight: bold; border: 2px solid blue;">
-        </div>
-        <div style="text-align:right; margin-top:10px; font-weight:bold; font-size:16px;">
-            DUE BALANCE: <span id="ui_due" style="color:red">0</span>
-        </div>
+        <label style="color:blue">PAID AMOUNT ₹</label>
+        <input type="number" id="Total Paid" oninput="calculate()" style="font-size: 20px; font-weight: bold;">
+        <div style="text-align:right; font-weight:bold; margin-top:5px; color:red;">Due: <span id="ui_due">0</span></div>
     </div>
 
-    <button class="btn-save" onclick="saveData()">SAVE & PRINT RECEIPT 🖨️</button>
+    <button class="btn-save" onclick="saveData()">SAVE & GENERATE RECEIPT 🖨️</button>
 </div>
 
 <div id="receipt-modal">
     <div class="receipt-box">
-        <center>
-            <h2 style="margin:0;">SAGAR PUBLIC SCHOOL</h2>
-            <small>QUAZITOLA, BARSOI (KATIHAR)<br>Cash Memo / Fee Receipt</small>
-        </center>
-        <hr style="border:1px solid #000">
-        <table style="width:100%; font-size:11px; line-height:1.4">
-            <tr><td><b>Name:</b> <span id="r_name"></span></td><td align="right"><b>Date:</b> <span id="r_date"></span></td></tr>
-            <tr><td><b>Father:</b> <span id="r_father"></span></td><td align="right"><b>Class:</b> <span id="r_class"></span></td></tr>
-            <tr><td><b>Address:</b> <span id="r_address"></span></td><td align="right"><b>ID:</b> <span id="r_id"></span></td></tr>
-            <tr><td><b>Month:</b> <span id="r_month"></span></td><td></td></tr>
-        </table>
-        <table class="r-table">
-            <thead><tr><th>Sl.</th><th>Description</th><th>Qty</th><th>Amount</th></tr></thead>
-            <tbody id="r_body"></tbody>
-            <tfoot>
-                <tr><th colspan="3" align="right">Sub Total</th><td id="r_sub"></td></tr>
-                <tr><th colspan="3" align="right">Discount</th><td id="r_disc"></td></tr>
-                <tr><th colspan="3" align="right">Paid Amount</th><td id="r_paid" style="font-weight:bold"></td></tr>
-                <tr><th colspan="3" align="right">Due Balance</th><td id="r_due" style="color:red; font-weight:bold"></td></tr>
-            </tfoot>
-        </table>
-        <div style="margin-top:20px; display:flex; justify-content: space-between; font-size:10px;">
-            <span>________________<br>Parent's Signature</span>
-            <span>________________<br>Operator Signature</span>
+        <div class="r-header">
+            <h2>SAGAR PUBLIC SCHOOL</h2>
+            <p>QUAZITOLA, BARSOI (KATIHAR)</p>
+            <p style="font-size:10px; text-transform:none;">Cash Memo / Fee Receipt</p>
         </div>
+        
+        <div class="r-meta">
+            <div><b>Name:</b> <span id="r_name"></span><br><b>Father:</b> <span id="r_father"></span><br><b>Address:</b> <span id="r_address"></span></div>
+            <div style="text-align:right"><b>Date:</b> <span id="r_date"></span><br><b>Class:</b> <span id="r_class"></span><br><b>ID:</b> <span id="r_id"></span></div>
+        </div>
+        <div style="font-size:13px; margin-bottom:5px;"><b>Month:</b> <span id="r_month"></span></div>
+
+        <table class="r-table">
+            <thead><tr><th width="30">SL</th><th>Description</th><th width="40">Qty</th><th width="80">Amount</th></tr></thead>
+            <tbody id="r_body"></tbody>
+        </table>
+        
+        <table class="r-footer-table">
+            <tr><td colspan="3" align="right"><b>Sub Total</b></td><td width="80" id="r_sub"></td></tr>
+            <tr><td colspan="3" align="right"><b>Discount</b></td><td id="r_disc"></td></tr>
+            <tr><td colspan="3" align="right"><b>Paid Amount</b></td><td id="r_paid" style="font-weight:bold"></td></tr>
+            <tr><td colspan="3" align="right"><b>Due Balance</b></td><td id="r_due" style="color:red; font-weight:bold"></td></tr>
+        </table>
+
+        <div class="words-section"><b>In Words:</b> <span id="r_words"></span> Rupees Only.</div>
+
+        <div class="sig-box">
+            <span>___________________<br>Parent's Signature</span>
+            <span>___________________<br>Authorized Signature</span>
+        </div>
+
         <div class="no-print" style="margin-top:20px; display:flex; gap:10px;">
-            <button onclick="window.print()" style="flex:1; padding:10px; background:green; color:white; border:none;">PRINT</button>
-            <button onclick="location.reload()" style="flex:1; padding:10px; background:#666; color:white; border:none;">CLOSE</button>
+            <button onclick="window.print()" style="flex:1; padding:10px; background:green; color:white; border:none; border-radius:4px; cursor:pointer;">PRINT</button>
+            <button onclick="location.reload()" style="flex:1; padding:10px; background:#666; color:white; border:none; border-radius:4px; cursor:pointer;">CLOSE</button>
         </div>
     </div>
 </div>
@@ -147,36 +132,51 @@
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxeZr9F1N0SIn1JqP6KsIS4fvJs0538Gy0p4-IT9psIiJ2rzyepXkn6iHm_OIIPJWhc/exec";
 
+    // Amount to Words Converter
+    function numberToWords(num) {
+        var a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
+        var b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+        if ((num = num.toString()).length > 9) return 'Overflow';
+        var n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+        if (!n) return ''; var str = '';
+        str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+        str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+        str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+        str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+        str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+        return str;
+    }
+
     async function fetchHeaders() {
         const m = document.getElementById('Month').value;
         const res = await fetch(`${SCRIPT_URL}?action=getHeaders&month=${m}`);
         const headers = await res.json();
-        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Total Dues","Total Paid","Remaining","Paid Date","Admission Fee","School Fee","School Van Fee","Exam Fee","School Bag","Development Fee","Hostel & School Fee","Discount"];
-        const uni = document.getElementById('uni-dropdown');
-        const book = document.getElementById('book-dropdown');
-        uni.innerHTML = book.innerHTML = '<option value="">-- Select --</option>';
-        headers.forEach(h => { if(h && !exclude.includes(h)){ uni.innerHTML+=`<option value="${h}">${h}</option>`; book.innerHTML+=`<option value="${h}">${h}</option>`; } });
+        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel & School Fee","Discount","Total Paid","Total Dues","Remaining","Paid Date"];
+        
+        let html = '<option value="">-- Select Item --</option>';
+        headers.forEach(h => { if(h && !exclude.includes(h)) html += `<option value="${h}">${h}</option>`; });
+        document.getElementById('uni-drop').innerHTML = document.getElementById('book-drop').innerHTML = html;
     }
 
-    function addRow(type) {
-        const val = document.getElementById(type+'-dropdown').value;
-        if(!val || document.querySelector(`[data-h="${val}"]`)) return;
-        const body = document.getElementById(type+'-body');
-        const tr = document.createElement('tr');
-        tr.setAttribute('data-h', val);
-        tr.innerHTML = `<td align="left"><b>${val}</b></td><td><input type="number" class="q-in" value="1" style="width:40px"></td><td><input type="number" class="a-in calc-total" oninput="calculate()" placeholder="0" style="width:70px"></td><td style="color:red;cursor:pointer" onclick="this.parentElement.remove();calculate()">✖</td>`;
-        body.appendChild(tr);
+    function addDynamic(el, type) {
+        if(!el.value) return;
+        const container = document.getElementById('dynamic-rows');
+        const div = document.createElement('div');
+        div.className = 'grid-row';
+        div.setAttribute('data-h', el.value);
+        div.innerHTML = `<div><label>${el.value}</label><input type="number" class="calc-total d-amt" oninput="calculate()" placeholder="Amount"></div>
+                         <div style="display:flex; align-items:flex-end;"><button onclick="this.parentElement.parentElement.remove();calculate()" style="background:red; color:white; border:none; padding:8px; border-radius:4px; width:100%;">Remove</button></div>`;
+        container.appendChild(div);
+        el.value = "";
     }
 
     function calculate() {
         let sub = 0;
         document.querySelectorAll('.calc-total').forEach(i => sub += parseFloat(i.value) || 0);
-        document.getElementById('sub_total').value = sub;
+        document.getElementById('sub_t').value = sub;
         let disc = parseFloat(document.getElementById('Discount').value) || 0;
-        let net = sub - disc;
-        document.getElementById('net_payable').value = net;
         let paid = parseFloat(document.getElementById('Total Paid').value) || 0;
-        document.getElementById('ui_due').innerText = net - paid;
+        document.getElementById('ui_due').innerText = (sub - disc) - paid;
     }
 
     async function saveData() {
@@ -190,19 +190,16 @@
             "Prev Dues": document.getElementById('Prev Dues').value || 0,
             "Admission Fee": document.getElementById('Admission Fee').value || 0,
             "School Fee": document.getElementById('School Fee').value || 0,
-            "School Van Fee": document.getElementById('School Van Fee').value || 0,
             "Hostel & School Fee": document.getElementById('Hostel & School Fee').value || 0,
-            "Exam Fee": document.getElementById('Exam Fee').value || 0,
-            "School Bag": document.getElementById('School Bag').value || 0,
-            "Development Fee": document.getElementById('Development Fee').value || 0,
             "Discount": document.getElementById('Discount').value || 0,
             "Total Paid": document.getElementById('Total Paid').value || 0
         };
-        document.querySelectorAll('tr[data-h]').forEach(row => { data[row.getAttribute('data-h')] = row.querySelector('.a-in').value || 0; });
-        
+        document.querySelectorAll('[data-h]').forEach(row => {
+            data[row.getAttribute('data-h')] = row.querySelector('.d-amt').value || 0;
+        });
+
         Swal.fire({title:'Saving...', didOpen:()=>Swal.showLoading()});
         await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
-        Swal.fire('Saved!', 'Entry successful', 'success');
         showReceipt(data);
     }
 
@@ -216,18 +213,22 @@
         document.getElementById('r_date').innerText = new Date().toLocaleDateString('en-GB');
 
         let html = ""; let sl = 1;
-        const main = ["Prev Dues","Admission Fee","School Fee","School Van Fee","Hostel & School Fee","Exam Fee","School Bag","Development Fee"];
-        main.forEach(k => { if(d[k]>0) html += `<tr><td>${sl++}</td><td>${k}</td><td>1</td><td>${d[k]}</td></tr>`; });
-        document.querySelectorAll('tr[data-h]').forEach(row => {
-            const h = row.getAttribute('data-h'), a = row.querySelector('.a-in').value;
-            if(a>0) html += `<tr><td>${sl++}</td><td>${h}</td><td>${row.querySelector('.q-in').value}</td><td>${a}</td></tr>`;
+        const mainKeys = ["Prev Dues","Admission Fee","School Fee","Hostel & School Fee"];
+        mainKeys.forEach(k => { if(d[k]>0) html += `<tr><td>${sl++}</td><td>${k}</td><td>1</td><td>${d[k]}</td></tr>`; });
+        
+        document.querySelectorAll('[data-h]').forEach(row => {
+            const h = row.getAttribute('data-h'), a = row.querySelector('.d-amt').value;
+            if(a>0) html += `<tr><td>${sl++}</td><td>${h}</td><td>1</td><td>${a}</td></tr>`;
         });
 
         document.getElementById('r_body').innerHTML = html;
-        document.getElementById('r_sub').innerText = document.getElementById('sub_total').value;
+        document.getElementById('r_sub').innerText = document.getElementById('sub_t').value;
         document.getElementById('r_disc').innerText = d["Discount"];
         document.getElementById('r_paid').innerText = d["Total Paid"];
         document.getElementById('r_due').innerText = document.getElementById('ui_due').innerText;
+        document.getElementById('r_words').innerText = numberToWords(d["Total Paid"]);
+        
+        Swal.close();
         document.getElementById('receipt-modal').style.display = 'block';
     }
     window.onload = fetchHeaders;
