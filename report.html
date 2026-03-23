@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --p: #1a237e; --bg: #f4f7f6; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .report-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* Filter Section */
+        .filter-section { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 25px; background: #eee; padding: 15px; border-radius: 8px; }
+        .filter-group { display: flex; flex-direction: column; align-items: flex-start; }
+        label { font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        select, input[type="date"] { padding: 10px; border-radius: 6px; border: 1px solid #ccc; min-width: 150px; }
+        
+        /* Stats Boxes */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-box { padding: 15px; border-radius: 8px; text-align: center; color: white; }
+        .t-dues { background: #3f51b5; }
+        .t-paid { background: #2e7d32; }
+        .t-bal { background: #c62828; }
+        .stat-box small { font-size: 11px; opacity: 0.8; }
+        .stat-box div { font-size: 18px; font-weight: bold; }
+
+        /* Table */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 12px; }
+        th { background: var(--p); color: white; padding: 12px; border: 1px solid #ddd; text-align: left; }
+        td { padding: 10px; border: 1px solid #ddd; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .clickable-name { color: blue; cursor: pointer; text-decoration: underline; font-weight: bold; }
+        
+        .btn-show { background: var(--p); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; align-self: flex-end; }
+    </style>
+</head>
+<body>
+
+<div class="report-card">
+    <h3 style="text-align:center; margin-top:0;">Collection Report Dashboard</h3>
+    
+    <div class="filter-section">
+        <div class="filter-group">
+            <label>Select Month</label>
+            <select id="monthFilter">
+                <option value="">-- All Months --</option>
+                <option>January</option><option>February</option><option>March</option>
+                <option>April</option><option>May</option><option>June</option>
+                <option>July</option><option>August</option><option>September</option>
+                <option>October</option><option>November</option><option>December</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Specific Date (Daily)</label>
+            <input type="date" id="dateFilter">
+        </div>
+        <button class="btn-show" onclick="fetchReportData()">SHOW REPORT</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-box t-dues"><small>Total Sub-Total</small><div id="sum-dues">₹0</div></div>
+        <div class="stat-box t-paid"><small>Total Received</small><div id="sum-paid">₹0</div></div>
+        <div class="stat-box t-bal"><small>Total Balance</small><div id="sum-bal">₹0</div></div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Student Name</th>
+                    <th>Sub-Total</th>
+                    <th>Discount</th>
+                    <th>Paid</th>
+                    <th>Balance</th>
+                </tr>
+            </thead>
+            <tbody id="reportData"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxeZr9F1N0SIn1JqP6KsIS4fvJs0538Gy0p4-IT9psIiJ2rzyepXkn6iHm_OIIPJWhc/exec";
+
+    async function fetchReportData() {
+        const month = document.getElementById('monthFilter').value;
+        const date = document.getElementById('dateFilter').value;
+        
+        let url = `${SCRIPT_URL}?action=getReport&month=${month}&date=${date}`;
+        
+        document.getElementById('reportData').innerHTML = "<tr><td colspan='6' style='text-align:center'>Loading...</td></tr>";
+
+        try {
+            const response = await fetch(url);
+            const results = await response.json();
+            renderTable(results);
+        } catch (e) {
+            alert("Error fetching data!");
+        }
+    }
+
+    function renderTable(data) {
+        let html = "";
+        let totalD = 0, totalP = 0, totalB = 0;
+
+        if(data.length === 0) {
+            html = "<tr><td colspan='6' style='text-align:center'>No records found</td></tr>";
+        } else {
+            data.forEach(row => {
+                totalD += parseFloat(row["Sub Total"] || 0);
+                totalP += parseFloat(row["Total Paid"] || 0);
+                totalB += parseFloat(row["Remaining"] || 0);
+
+                html += `<tr>
+                    <td>${row["Student Id"]}</td>
+                    <td class="clickable-name" onclick="openReceipt('${row["Student Id"]}')">${row["Student Name"]}</td>
+                    <td>₹${row["Sub Total"]}</td>
+                    <td>₹${row["Discount"] || 0}</td>
+                    <td style="color:green; font-weight:bold;">₹${row["Total Paid"]}</td>
+                    <td style="color:red;">₹${row["Remaining"]}</td>
+                </tr>`;
+            });
+        }
+
+        document.getElementById('reportData').innerHTML = html;
+        document.getElementById('sum-dues').innerText = `₹${totalD}`;
+        document.getElementById('sum-paid').innerText = `₹${totalP}`;
+        document.getElementById('sum-bal').innerText = `₹${totalB}`;
+    }
+
+    function openReceipt(id) {
+        // Redirect to search page or trigger modal
+        window.location.href = `YOUR_SEARCH_PAGE_URL?id=${id}`;
+    }
+</script>
+</body>
+</html>
