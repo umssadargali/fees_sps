@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --p: #1a237e; --bg: #f4f7f6; --pink: #ffc0cb; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-top: 70px; }
+        
+        /* Navigation Bar */
+        .nav { background: var(--p); display: flex; justify-content: center; padding: 12px; gap: 8px; position: fixed; top: 0; width: 100%; z-index: 1000; overflow-x: auto; }
+        .nav button { padding: 8px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; background: #3949ab; color: white; font-size: 12px; transition: 0.3s; }
+        .nav button.active { background: #ff9800 !important; color: #000 !important; }
+
+        .container { max-width: 500px; margin: 15px auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        label { font-size: 11px; font-weight: bold; color: #555; display: block; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        .btn-save { width: 100%; padding: 14px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 15px; cursor: pointer; }
+        .hidden-field { display: none !important; }
+
+        /* --- Sagar Public School Receipt Design (Pink) --- */
+        #receipt-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 15px; }
+        .receipt-box { 
+            max-width: 450px; 
+            margin: 0 auto; 
+            background: var(--pink); 
+            border: 2px solid #000; 
+            padding: 20px; 
+            color: #000; 
+            position: relative;
+        }
+        .r-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px; }
+        .r-header h1 { margin: 0; font-size: 24px; text-transform: uppercase; font-weight: 800; }
+        .r-header p { margin: 2px 0; font-size: 11px; font-weight: bold; }
+        
+        .r-meta { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
+        .r-field { border-bottom: 1px dotted #000; margin-bottom: 6px; font-size: 14px; }
+        .r-field b { display: inline-block; min-width: 120px; }
+
+        .r-table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #000; }
+        .r-table th, .r-table td { border: 1px solid #000; padding: 6px; font-size: 12px; text-align: left; }
+        .r-table th { background: rgba(0,0,0,0.05); }
+
+        .r-total-section { margin-top: 10px; display: flex; justify-content: flex-end; }
+        .r-total-table { width: 50%; border-collapse: collapse; border: 1px solid #000; }
+        .r-total-table td { border: 1px solid #000; padding: 4px 8px; font-weight: bold; font-size: 13px; }
+
+        .r-footer { display: flex; justify-content: space-between; margin-top: 40px; font-size: 12px; font-weight: bold; }
+        
+        @media print { 
+            .no-print { display: none !important; } 
+            body { padding: 0; }
+            #receipt-modal { position: absolute; top: 0; }
+            .receipt-box { border: 1px solid #000; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="nav no-print">
+    <button id="b1" class="active" onclick="tab('entry')">NEW ENTRY</button>
+    <button id="b2" onclick="tab('search')">SEARCH</button>
+    <button id="b3" onclick="tab('report')">REPORT</button>
+</div>
+
+<div id="entry-div" class="container no-print">
+    <label>Select Month</label>
+    <select id="Month" onchange="loadDynamicUI()" style="border: 2px solid var(--p); margin-bottom:15px;">
+        <option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option>
+    </select>
+    
+    <div id="dynamic-fields" class="grid"></div>
+    
+    <div style="margin-top:15px; background:#fff9c4; padding:10px; border-radius:8px;">
+        <label>Amount to Pay Now (₹)</label>
+        <input type="number" id="manual_paid" placeholder="Enter amount..." oninput="doCalc()" style="font-weight:bold; font-size:16px;">
+    </div>
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:10px; background:#eee; padding:10px; border-radius:8px; text-align:center; font-size:12px;">
+        <div>Total<br><b id="ui_total">0</b></div>
+        <div>Paid<br><b id="ui_paid_val" style="color:blue">0</b></div>
+        <div>Bal<br><b id="ui_bal" style="color:red">0</b></div>
+    </div>
+    
+    <button class="btn-save" onclick="saveData()">SAVE & PRINT RECEIPT 🖨️</button>
+</div>
+
+<div id="search-div" class="container no-print" style="display:none">
+    <input type="text" id="q_id" placeholder="Enter Student ID">
+    <button onclick="findData()" style="width:100%; margin-top:10px; padding:12px; background:var(--p); color:white; border:none; border-radius:8px; font-weight:bold;">SEARCH</button>
+    <div id="res-list" style="margin-top:15px;"></div>
+</div>
+
+<div id="receipt-modal">
+    <div class="receipt-box">
+        <div class="r-header">
+            <span style="float:left; border:1px solid #000; padding:2px 5px; font-size:10px;">Cash Memo</span>
+            <span style="float:right; font-size:10px;">9279583673, 9973048043</span>
+            <div style="clear:both"></div>
+            <h1>SAGAR PUBLIC SCHOOL</h1>
+            <p>QUAZITOLA, BARSOI (KATIHAR)</p>
+            <p>email-sagarpublicschool2023@gmail.com</p>
+            <p style="font-size:9px;">RTE Reg. No. 21211472023218114225 | UDISE No. 10101122703</p>
+        </div>
+
+        <div class="r-meta">
+            <span>Sl. No. A- <span id="r_sl">1711</span></span>
+            <span>Date: <span id="r_date"></span></span>
+        </div>
+
+        <div class="r-field"><b>Name of Student:-</b> <span id="r_name"></span></div>
+        <div style="display:flex; gap:10px;">
+            <div class="r-field" style="flex:2;"><b>Father's Name:-</b> <span id="r_father"></span></div>
+            <div class="r-field" style="flex:1;"><b>Class:</b> <span id="r_class"></span></div>
+        </div>
+        <div class="r-field"><b>ID. No.</b> <span id="r_id" style="letter-spacing:2px; font-weight:bold;"></span></div>
+
+        <table class="r-table">
+            <thead>
+                <tr><th width="10%">Sl.</th><th>Description</th><th width="25%">Amount</th></tr>
+            </thead>
+            <tbody id="r_items"></tbody>
+        </table>
+
+        <div class="r-total-section">
+            <table class="r-total-table">
+                <tr><td>Total</td><td id="r_total"></td></tr>
+                <tr><td>Deposit</td><td id="r_paid" style="color:blue;"></td></tr>
+                <tr><td>Due</td><td id="r_due" style="color:red;"></td></tr>
+            </table>
+        </div>
+
+        <div class="r-footer">
+            <span>Signature of Parents/Guardian</span>
+            <span>Signature of Operator</span>
+        </div>
+
+        <div class="no-print" style="margin-top:25px; display:flex; gap:10px;">
+            <button onclick="window.print()" style="flex:1; padding:12px; background:green; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">PRINT NOW</button>
+            <button onclick="closeR()" style="flex:1; padding:12px; background:#666; color:white; border:none; border-radius:5px; cursor:pointer;">CLOSE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- APP LOGIC (Compatible with old Code.gs) ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxeZr9F1N0SIn1JqP6KsIS4fvJs0538Gy0p4-IT9psIiJ2rzyepXkn6iHm_OIIPJWhc/exec";
+    let currentHeaders = [];
+
+    window.onload = loadDynamicUI;
+
+    async function loadDynamicUI() {
+        let m = document.getElementById('Month').value;
+        let container = document.getElementById('dynamic-fields');
+        container.innerHTML = "<small>Syncing fields...</small>";
+        
+        try {
+            let res = await fetch(SCRIPT_URL + "?action=getHeaders&month=" + m);
+            currentHeaders = await res.json();
+            container.innerHTML = "";
+            
+            // Robust Hide Logic: Ye columns UI me nahi dikhenge par data save karte waqt use honge
+            let hide = ["Total Dues", "Total Paid", "Remaining", "Paid Date", "Month"];
+            
+            currentHeaders.forEach(h => {
+                let div = document.createElement('div');
+                if(hide.includes(h)) div.className = "hidden-field";
+                if(["Student Name", "Father Name", "Student Id", "Address"].includes(h)) div.style.gridColumn = "span 2";
+                
+                div.innerHTML = `<label>${h}</label>
+                                 <input type="${h.includes('Fee') || h.includes('Dues') ? 'number':'text'}" id="${h}" oninput="doCalc()">`;
+                container.appendChild(div);
+            });
+        } catch(e) { container.innerHTML = "Error loading fields."; }
+    }
+
+    function doCalc() {
+        let total = 0;
+        // Robust Calc: Auto-sum everything that is not a basic info column
+        let infoFields = ["Student Id", "Student Name", "Father Name", "Class", "Address", "Month", "Paid Date", "Total Dues", "Total Paid", "Remaining"];
+        
+        currentHeaders.forEach(h => {
+            let el = document.getElementById(h);
+            if(el && !infoFields.includes(h)) {
+                total += parseFloat(el.value) || 0;
+            }
+        });
+
+        let paid = parseFloat(document.getElementById('manual_paid').value) || 0;
+        
+        document.getElementById('ui_total').innerText = "₹" + total;
+        document.getElementById('ui_paid_val').innerText = "₹" + paid;
+        document.getElementById('ui_bal').innerText = "₹" + (total - paid);
+
+        // Update hidden fields for Code.gs to save
+        if(document.getElementById('Total Dues')) document.getElementById('Total Dues').value = total;
+        if(document.getElementById('Total Paid')) document.getElementById('Total Paid').value = paid;
+        if(document.getElementById('Remaining')) document.getElementById('Remaining').value = total - paid;
+    }
+
+    async function saveData() {
+        let data = { Month: document.getElementById('Month').value };
+        currentHeaders.forEach(h => { data[h] = document.getElementById(h).value; });
+        
+        if(!data["Student Id"]) return Swal.fire('Error', 'Student ID is required', 'error');
+        
+        Swal.fire({title: 'Saving Data...', didOpen: () => Swal.showLoading()});
+        
+        try {
+            let res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data) });
+            if(await res.text() === "Success") {
+                Swal.fire('Saved Successfully!', '', 'success');
+                showR(data);
+            }
+        } catch(e) { Swal.fire('Error', 'Could not save', 'error'); }
+    }
+
+    function showR(r) {
+        document.getElementById('r_name').innerText = r["Student Name"] || "";
+        document.getElementById('r_father').innerText = r["Father Name"] || "";
+        document.getElementById('r_class').innerText = r.Class || "";
+        document.getElementById('r_id').innerText = r["Student Id"] || "";
+        document.getElementById('r_date').innerText = new Date().toLocaleDateString('en-GB');
+        
+        let h = "";
+        let count = 1;
+        let infoFields = ["Student Id", "Student Name", "Father Name", "Class", "Address", "Month", "Paid Date", "Total Dues", "Total Paid", "Remaining"];
+        
+        // Robust Receipt: Sirf wo columns dikhao jisme value 0 se zyada hai
+        currentHeaders.forEach(key => {
+            if(!infoFields.includes(key) && r[key] && parseFloat(r[key]) > 0) {
+                h += `<tr><td>${count++}</td><td>${key}</td><td>₹${r[key]}</td></tr>`;
+            }
+        });
+
+        document.getElementById('r_items').innerHTML = h;
+        document.getElementById('r_total').innerText = "₹" + (r["Total Dues"] || 0);
+        document.getElementById('r_paid').innerText = "₹" + (r["Total Paid"] || 0);
+        document.getElementById('r_due').innerText = "₹" + (r["Remaining"] || 0);
+        document.getElementById('receipt-modal').style.display = 'block';
+    }
+
+    function tab(t) {
+        document.getElementById('entry-div').style.display = t==='entry'?'block':'none';
+        document.getElementById('search-div').style.display = t==='search'?'block':'none';
+        document.getElementById('b1').className = t==='entry'?'active':'';
+        document.getElementById('b2').className = t==='search'?'active':'';
+    }
+    function closeR() { document.getElementById('receipt-modal').style.display = 'none'; }
+    // Note: findData() and loadReport() ko aap purane logic se yahan paste kar sakte hain agar zaroorat ho.
+</script>
+</body>
+</html>
