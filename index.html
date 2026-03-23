@@ -199,7 +199,7 @@
         const m = document.getElementById('Month').value;
         const res = await fetch(`${SCRIPT_URL}?action=getHeaders&month=${m}`);
         const headers = await res.json();
-        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel & School Fee","Exam Fee","School Bag","Discount","Total Paid","Total Dues","Remaining","Paid Date"];
+        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel & School Fee","Exam Fee","Development Fee"," Miscellaneous Fee","Discount","Total Paid","Total Dues","Remaining","Paid Date"];
         let uniHtml = '<option value="">Select Uniform</option>';
         let bookHtml = '<option value="">Select Books</option>';
         headers.forEach(h => { if(h && !exclude.includes(h)) { uniHtml += `<option value="${h}">${h}</option>`; bookHtml += `<option value="${h}">${h}</option>`; } });
