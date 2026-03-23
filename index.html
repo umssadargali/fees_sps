@@ -31,6 +31,10 @@
         .r-table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #000; }
         .r-table th, .r-table td { border: 1px solid #000; padding: 4px; font-size: 11px; text-align: left; }
         .r-total td { border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold; }
+        
+        /* New styling for indented multiple items in receipt */
+        .indented-item { padding-left: 20px; font-style: italic; color: #333; }
+        
         @media print { .no-print { display: none !important; } #receipt-modal { position: absolute; top: 0; } }
     </style>
 </head>
@@ -97,8 +101,8 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxeZr9F1N0SIn1JqP6KsIS4fvJs0538Gy0p4-IT9psIiJ2rzyepXkn6iHm_OIIPJWhc/exec"; 
 
     const dropConfigs = {
-        "School Uniform Fee": ["Shirt", "Pants", "T-Shirts", "Trousers", "Leggins", "Tye", "Belt"],
-        "School Books Fee": ["Books", "Copies", "Pencils", "Cover", "Duster", "Diary"]
+        "6.School Uniform Fee": ["Shirt", "Pants", "T-Shirts", "Trousers", "Leggins", "Tye", "Belt"],
+        "7.School Books": ["Books", "Copies", "Pencils", "Cover", "Duster", "Diary"]
     };
 
     window.onload = loadDynamicUI;
@@ -113,6 +117,9 @@
         window.currentHeaders = headers;
         container.innerHTML = "";
 
+        // Function to remove prefix from header for UI
+        const cleanH = (str) => str.replace(/^[0-9.]+/,"");
+
         headers.forEach(h => {
             const div = document.createElement('div');
             if (["Total Dues", "Total Paid", "Remaining", "Paid Date", "Month"].includes(h)) div.style.display = "none";
@@ -123,7 +130,7 @@
                 let html = `<label>${h}</label>
                             <div class="header-row"><span style="margin-left:5px">Item</span><span style="margin-left:110px">Qnty</span><span style="margin-left:60px">Amount</span></div>`;
                 dropConfigs[h].forEach(item => {
-                    const safeKey = h.replace(/\s/g,'') + "_" + item.replace(/\s/g,'');
+                    const safeKey = h.replace(/\s/g,'').replace(/[.]/g,'') + "_" + item.replace(/\s/g,'');
                     html += `<div class="item-row">
                                 <span>${item}</span>
                                 <input type="number" id="qty_${safeKey}" placeholder="0" oninput="updateSubtotal('${h}')">
@@ -142,7 +149,7 @@
     function updateSubtotal(header) {
         let subtotal = 0;
         dropConfigs[header].forEach(item => {
-            const safeKey = header.replace(/\s/g,'') + "_" + item.replace(/\s/g,'');
+            const safeKey = header.replace(/\s/g,'').replace(/[.]/g,'') + "_" + item.replace(/\s/g,'');
             const amt = parseFloat(document.getElementById(`amt_${safeKey}`).value) || 0;
             subtotal += amt;
         });
@@ -170,7 +177,7 @@
             if (dropConfigs[h]) {
                 let itemsList = [];
                 dropConfigs[h].forEach(item => {
-                    const safeKey = h.replace(/\s/g,'') + "_" + item.replace(/\s/g,'');
+                    const safeKey = h.replace(/\s/g,'').replace(/[.]/g,'') + "_" + item.replace(/\s/g,'');
                     const q = document.getElementById(`qty_${safeKey}`).value;
                     const a = document.getElementById(`amt_${safeKey}`).value;
                     if (a > 0) itemsList.push({ name: item, qty: q, amt: a });
@@ -193,12 +200,19 @@
         document.getElementById('r_date').innerText = new Date().toLocaleDateString('en-GB');
         
         let html = ""; let count = 1;
+        const roman = ["(i)", "(ii)", "(iii)", "(iv)", "(v)", "(vi)", "(vii)"];
+
         window.currentHeaders.forEach(h => {
-            if (dropConfigs[h] && data[h + "_items"]) {
-                data[h + "_items"].forEach(i => {
-                    html += `<tr><td>${count++}</td><td>${i.name}</td><td style="text-align:center">${i.qty || '-'}</td><td>₹${i.amt}</td></tr>`;
+            if (dropConfigs[h] && data[h + "_items"] && data[h + "_items"].length > 0) {
+                // Add the main heading like "6.School Uniform Fee"
+                html += `<tr><td>${count++}</td><td>${h}</td><td>-</td><td>₹${data[h]}</td></tr>`;
+                
+                // Add indented multiple items like (i) Shirt, (ii) Pants with their quantities
+                data[h + "_items"].forEach((i, idx) => {
+                    html += `<tr><td></td><td class="indented-item">${roman[idx]} ${i.name}</td><td style="text-align:center">${i.qty || '-'}</td><td>-</td></tr>`;
                 });
-            } else if (parseFloat(data[h]) > 0 && !["Student Id", "Total Dues", "Total Paid", "Remaining"].includes(h)) {
+            } else if (parseFloat(data[h]) > 0 && !["Student Id", "Student Name", "Father Name", "Class", "Address", "Month", "Paid Date", "Total Dues", "Total Paid", "Remaining"].includes(h)) {
+                // For regular items
                 html += `<tr><td>${count++}</td><td>${h}</td><td style="text-align:center">-</td><td>₹${data[h]}</td></tr>`;
             }
         });
