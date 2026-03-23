@@ -5,7 +5,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* INTERFACE STYLES (NO CHANGES) */
+        /* INTERFACE STYLES (NO CHANGE) */
         :root { --p: #1a237e; --bg: #f4f7f6; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-top: 50px; }
         .nav { background: var(--p); padding: 10px; position: fixed; top: 0; width: 100%; z-index: 1000; text-align: center; color: white; font-weight: bold; }
@@ -18,20 +18,28 @@
         .total-box { background: #fff9c4; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #fbc02d; }
         .btn-save { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 15px; cursor: pointer; font-size: 16px; }
 
-        /* RECEIPT DESIGN (A4 LANDSCAPE) */
+        /* RECEIPT DESIGN (PINK & A4 LANDSCAPE SETUP) */
         #receipt-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 20px; }
         .print-wrapper { display: flex; justify-content: space-between; gap: 20px; width: 100%; max-width: 1100px; margin: 0 auto; }
-        .receipt-box { flex: 1; background: #ffdae9; border: 1.5px solid #000; padding: 15px; color: #000; position: relative; font-family: Arial, sans-serif; }
-        .r-header h2 { margin: 0; font-size: 19px; font-weight: 900; text-align: center;}
-        .r-header p { margin: 1px; font-size: 9px; font-weight: bold; text-align: center;}
-        .copy-tag { background: #000; color: #fff; padding: 2px 6px; font-size: 9px; border-radius: 2px; }
+        .receipt-box { flex: 1; background: #ffdae9; border: 2px solid #000; padding: 15px; color: #000; position: relative; font-family: Arial, sans-serif; }
+        .receipt-inner { position: relative; z-index: 1; }
+        .r-header { text-align: center; }
+        .r-header h2 { margin: 0; font-size: 18px; font-weight: 900; }
+        .r-header p { margin: 1px; font-size: 9px; font-weight: bold; }
+        .top-info { display: flex; justify-content: space-between; font-size: 10px; margin-top: 5px; border-bottom: 1px solid #000; padding-bottom: 2px; }
+        .copy-tag { background: #000; color: #fff; padding: 2px 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; border-radius: 3px; }
+        .student-details { display: grid; grid-template-columns: 1fr 1fr; font-size: 10px; margin-top: 8px; line-height: 1.5; }
         .r-table { width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000; }
-        .r-table th, .r-table td { border: 1px solid #000; padding: 2px 4px; font-size: 10px; }
+        .r-table th, .r-table td { border: 1px solid #000; padding: 3px; font-size: 10px; }
+        .words-section { border-bottom: 1px dotted #000; padding: 3px 0; font-size: 10px; margin-top: 5px; font-style: italic; }
+        .footer-sigs { display: flex; justify-content: space-between; margin-top: 30px; font-size: 10px; font-weight: bold; }
 
         @media print { 
-            @page { size: A4 landscape; margin: 8mm; }
+            @page { size: A4 landscape; margin: 10mm; }
             .no-print { display: none !important; } 
+            body { background: none; }
             #receipt-modal { position: absolute; top:0; left:0; width:100%; display: block !important; padding: 0; }
+            .print-wrapper { gap: 10px; }
         }
     </style>
 </head>
@@ -42,7 +50,7 @@
 <div class="container no-print">
     <label>Select Month</label>
     <select id="Month" onchange="fetchHeaders()">
-        <option>January</option><option>February</option>...
+        <option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option>
     </select>
 
     <div class="grid-row" style="margin-top:10px;">
@@ -72,23 +80,23 @@
     <div class="section-title">6. School Uniform Fee</div>
     <div style="display:flex; gap:5px; margin-bottom:5px;">
         <select id="uni-dropdown"><option value="">Loading...</option></select>
-        <button onclick="addRow('uni')" style="background:var(--p); color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">ADD</button>
+        <button onclick="addRow('uni')" style="background:var(--p); color:white; border:none; padding:5px 12px; border-radius:4px;">ADD</button>
     </div>
     <table class="fee-table"><tbody id="uni-body"></tbody></table>
 
     <div class="section-title">7. School Books</div>
     <div style="display:flex; gap:5px; margin-bottom:5px;">
         <select id="book-dropdown"><option value="">Loading...</option></select>
-        <button onclick="addRow('book')" style="background:var(--p); color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">ADD</button>
+        <button onclick="addRow('book')" style="background:var(--p); color:white; border:none; padding:5px 12px; border-radius:4px;">ADD</button>
     </div>
     <table class="fee-table"><tbody id="book-body"></tbody></table>
 
     <div class="section-title">8-10. Other Fees</div>
     <div class="grid-row">
-        <div><label>School Bag</label><input type="number" class="calc-total" id="School Bag" oninput="calculate()"></div>
-        <div><label>Development Fee</label><input type="number" class="calc-total" id="Development Fee" oninput="calculate()"></div>
+        <div><label>8. School Bag</label><input type="number" class="calc-total" id="School Bag" oninput="calculate()"></div>
+        <div><label>9. Development Fee</label><input type="number" class="calc-total" id="Development Fee" oninput="calculate()"></div>
     </div>
-    <div><label>Other Fee</label><input type="number" class="calc-total" id="Other Fee" oninput="calculate()"></div>
+    <div><label>10. Other Fee</label><input type="number" class="calc-total" id="Other Fee" oninput="calculate()"></div>
 
     <div class="total-box">
         <div class="grid-row">
@@ -108,29 +116,52 @@
         <div class="receipt-box" id="guardian-copy"></div>
         <div class="receipt-box" id="office-copy"></div>
     </div>
+    <div class="no-print" style="text-align:center; margin-top:20px;">
+        <button onclick="window.print()" style="padding:10px 40px; background:green; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">PRINT BOTH COPIES</button>
+        <button onclick="location.reload()" style="padding:10px 40px; background:#666; color:white; border:none; border-radius:4px; margin-left:10px; cursor:pointer;">CLOSE</button>
+    </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxeZr9F1N0SIn1JqP6KsIS4fvJs0538Gy0p4-IT9psIiJ2rzyepXkn6iHm_OIIPJWhc/exec";
 
+    function roman(n) { const r = ["i","ii","iii","iv","v","vi","vii","viii","ix","x"]; return r[n-1] || n; }
+
+    function numberToWords(num) {
+        var a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
+        var b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+        if (num == 0) return 'Zero';
+        if ((num = num.toString()).length > 9) return '';
+        var n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+        if (!n) return ''; var str = '';
+        str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+        str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+        str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+        str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+        str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+        return str.trim();
+    }
+
     async function fetchHeaders() {
         const m = document.getElementById('Month').value;
         const res = await fetch(`${SCRIPT_URL}?action=getHeaders&month=${m}`);
         const headers = await res.json();
-        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel & School Fee","Exam Fee","School Bag","Discount","Total Paid","Remaining","Paid Date","School Van Fee","Development Fee","Other Fee","Sub Total"];
-        let html = '<option value="">-- Select --</option>';
-        headers.forEach(h => { if(h && !exclude.includes(h)) html += `<option value="${h}">${h}</option>`; });
-        document.getElementById('uni-dropdown').innerHTML = html;
-        document.getElementById('book-dropdown').innerHTML = html;
+        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel & School Fee","Exam Fee","School Bag","Discount","Total Paid","Total Dues","Remaining","Paid Date","School Van Fee","Development Fee","Other Fee","Sub Total"];
+        let uniHtml = '<option value="">Select Uniform</option>';
+        let bookHtml = '<option value="">Select Books</option>';
+        headers.forEach(h => { if(h && !exclude.includes(h)) { uniHtml += `<option value="${h}">${h}</option>`; bookHtml += `<option value="${h}">${h}</option>`; } });
+        document.getElementById('uni-dropdown').innerHTML = uniHtml;
+        document.getElementById('book-dropdown').innerHTML = bookHtml;
     }
 
     function addRow(type) {
         const val = document.getElementById(type + '-dropdown').value;
-        if(!val) return;
+        if(!val || document.querySelector(`[data-h="${val}"]`)) return;
         const body = document.getElementById(type + '-body');
         const tr = document.createElement('tr');
         tr.setAttribute('data-h', val);
-        tr.innerHTML = `<td><b>${val}</b></td>
+        tr.setAttribute('data-type', type);
+        tr.innerHTML = `<td style="text-align:left; padding-left:10px;"><b>${val}</b></td>
                         <td width="50"><input type="number" class="q-in" value="1" oninput="calculate()"></td>
                         <td width="80"><input type="number" class="a-in calc-total" oninput="calculate()" value="0"></td>
                         <td width="30" style="color:red; cursor:pointer" onclick="this.parentElement.remove();calculate()">✖</td>`;
@@ -147,6 +178,9 @@
     }
 
     async function saveData() {
+        let subTotal = document.getElementById('sub_t').value;
+        let discount = document.getElementById('Discount').value || 0;
+        let remaining = document.getElementById('ui_due').innerText;
         let data = {
             "Month": document.getElementById('Month').value,
             "Student Id": document.getElementById('Student Id').value,
@@ -163,10 +197,10 @@
             "School Bag": document.getElementById('School Bag').value || 0,
             "Development Fee": document.getElementById('Development Fee').value || 0,
             "Other Fee": document.getElementById('Other Fee').value || 0,
-            "Sub Total": document.getElementById('sub_t').value || 0,
-            "Discount": document.getElementById('Discount').value || 0,
+            "Discount": discount, // Post to sheet
             "Total Paid": document.getElementById('Total Paid').value || 0,
-            "Remaining": document.getElementById('ui_due').innerText
+            "Sub Total": subTotal, 
+            "Remaining": remaining
         };
         document.querySelectorAll('tr[data-h]').forEach(row => { data[row.getAttribute('data-h')] = row.querySelector('.a-in').value || 0; });
         
@@ -177,32 +211,51 @@
 
     function generateReceiptHTML(d, type) {
         let sl = 1; let rows = "";
-        const items = ["Prev Dues", "Admission Fee", "School Fee", "School Van Fee", "Hostel & School Fee", "Exam Fee", "School Bag", "Development Fee", "Other Fee"];
-        items.forEach(k => { if(d[k]>0) rows += `<tr><td>${sl++}</td><td>${k}</td><td>1</td><td>${d[k]}</td></tr>`; });
+        const main = ["Prev Dues", "Admission Fee", "School Fee", "School Van Fee", "Hostel & School Fee", "Exam Fee"];
+        main.forEach(k => { if(d[k]>0) rows += `<tr><td align="center">${sl++}.</td><td>${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; });
         
-        document.querySelectorAll('tr[data-h]').forEach(row => {
-            rows += `<tr><td>${sl++}</td><td>${row.getAttribute('data-h')}</td><td>${row.querySelector('.q-in').value}</td><td>${row.querySelector('.a-in').value}</td></tr>`;
-        });
+        let uniRows = document.querySelectorAll('tr[data-type="uni"]');
+        if(uniRows.length > 0) {
+            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Uniform Fee</b></td></tr>`;
+            uniRows.forEach((row, i) => { rows += `<tr><td></td><td>(${roman(i+1)}) ${row.getAttribute('data-h')}</td><td align="center">${row.querySelector('.q-in').value}</td><td align="center">${row.querySelector('.a-in').value}</td></tr>`; });
+        }
+        let bookRows = document.querySelectorAll('tr[data-type="book"]');
+        if(bookRows.length > 0) {
+            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Books</b></td></tr>`;
+            bookRows.forEach((row, i) => { rows += `<tr><td></td><td>(${roman(i+1)}) ${row.getAttribute('data-h')}</td><td align="center">${row.querySelector('.q-in').value}</td><td align="center">${row.querySelector('.a-in').value}</td></tr>`; });
+        }
+
+        const extra = ["School Bag", "Development Fee", "Other Fee"];
+        extra.forEach(k => { if(d[k]>0) rows += `<tr><td align="center">${sl++}.</td><td>${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; });
 
         return `
-            <div class="r-header">
-                <div style="display:flex; justify-content:space-between;"><span class="copy-tag">${type}</span><span>UDISE: 10101122703</span></div>
-                <h2>SAGAR PUBLIC SCHOOL</h2>
-                <p>QUAZITOLA, BARSOI (KATIHAR)</p>
-                <p>email: sagarpublicschool2023@gmail.com</p>
-                <p>RTE Registration No.21211472023218114225 | UDISE No.10101122703</p>
-            </div>
-            <table class="r-table">
-                <thead><tr><th>Sl</th><th>Description</th><th>Qty</th><th>Amount</th></tr></thead>
-                <tbody>${rows}</tbody>
-                <tfoot>
-                    <tr><th colspan="3" align="right">Sub Total</th><td>${d["Sub Total"]}</td></tr>
-                    <tr><th colspan="3" align="right">Discount (-)</th><td>${d["Discount"]}</td></tr>
-                    <tr><th colspan="3" align="right">Paid</th><td><b>${d["Total Paid"]}</b></td></tr>
-                    <tr><th colspan="3" align="right">Due</th><td style="color:red"><b>${d["Remaining"]}</b></td></tr>
-                </tfoot>
-            </table>
-            <div class="footer-sigs" style="display:flex; justify-content:space-between; margin-top:20px;"><span>Guardian</span><span>Authorized</span></div>`;
+            <div class="receipt-inner">
+                <div class="r-header">
+                    <div style="display:flex; justify-content:space-between;"><span class="copy-tag">${type}</span><span style="font-size:9px">UDISE: 10101122703</span></div>
+                    <h2>SAGAR PUBLIC SCHOOL</h2>
+                    <p>QUAZITOLA, BARSOI (KATIHAR)</p>
+                    <p style="font-size:8px">email: sagarpublicschool2023@gmail.com</p>
+                    <p style="font-size:7px">RTE Reg No.21211472023218114225 | UDISE No.10101122703</p>
+                </div>
+                <div class="top-info"><span>Sl: A-1711</span><span>Date: ${new Date().toLocaleDateString('en-GB')}</span></div>
+                <div class="student-details">
+                    <div><b>Name:</b> ${d["Student Name"]}</div><div><b>ID:</b> ${d["Student Id"]}</div>
+                    <div><b>Father:</b> ${d["Father Name"]}</div><div><b>Class:</b> ${d["Class"]}</div>
+                    <div><b>Address:</b> ${d["Address"]}</div><div><b>Month:</b> ${d["Month"]}</div>
+                </div>
+                <table class="r-table">
+                    <thead><tr><th>Sl.</th><th>Description</th><th>Qty</th><th>Amount</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                    <tfoot>
+                        <tr><th colspan="3" align="right">Sub Total</th><td align="center">${d["Sub Total"]}</td></tr>
+                        <tr><th colspan="3" align="right">Discount (-)</th><td align="center">${d["Discount"]}</td></tr>
+                        <tr><th colspan="3" align="right">Net Paid</th><td align="center"><b>${d["Total Paid"]}</b></td></tr>
+                        <tr><th colspan="3" align="right">Due Balance</th><td align="center" style="color:red"><b>${d["Remaining"]}</b></td></tr>
+                    </tfoot>
+                </table>
+                <div class="words-section"><b>Words:</b> ${numberToWords(d["Total Paid"])} Only.</div>
+                <div class="footer-sigs"><span>Parent Signature</span><span>Authorized Signature</span></div>
+            </div>`;
     }
 
     function showDualReceipt(d) {
@@ -210,8 +263,8 @@
         document.getElementById('office-copy').innerHTML = generateReceiptHTML(d, "Office Copy");
         Swal.close();
         document.getElementById('receipt-modal').style.display = 'block';
-        setTimeout(() => window.print(), 500);
     }
+
     window.onload = fetchHeaders;
 </script>
 </body>
