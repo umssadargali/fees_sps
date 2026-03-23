@@ -18,6 +18,7 @@
         th { background: var(--p); color: white; padding: 12px; border: 1px solid #ddd; }
         td { padding: 10px; border: 1px solid #ddd; background: #fff; text-align: center; }
         .btn-show { background: var(--p); color: white; border: none; padding: 11px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-show:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -29,11 +30,14 @@
         <div class="f-group">
             <label>1. SELECT MONTH</label>
             <select id="monthInput">
-                <option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option>
+                <option>January</option><option>February</option><option>March</option>
+                <option>April</option><option>May</option><option>June</option>
+                <option>July</option><option>August</option><option>September</option>
+                <option>October</option><option>November</option><option>December</option>
             </select>
         </div>
         <div class="f-group">
-            <label>2. PICK DATE (Daily)</label>
+            <label>2. PICK DATE (Daily Filter)</label>
             <input type="date" id="dateInput">
         </div>
         <button class="btn-show" onclick="loadReport()">SHOW REPORT</button>
@@ -53,28 +57,32 @@
                 </tr>
             </thead>
             <tbody id="reportTableBody">
-                <tr><td colspan="6" style="padding:20px;">Select filters and click Show</td></tr>
+                <tr><td colspan="6" style="padding:20px; color:#666;">Select filters and click Show Report</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxeZr9F1N0SIn1JqP6KsIS4fvJs0538Gy0p4-IT9psIiJ2rzyepXkn6iHm_OIIPJWhc/exec";
+    // Aapka naya Web App URL
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLK7x1LSLSzKqPiQOBT1-3h1SyG8hqmRAOoUdzJaYJ8s4MRQGPzv4Uf2c_yJreh-41/exec";
 
     async function loadReport() {
         let selectedMonth = document.getElementById('monthInput').value;
         let selectedDate = document.getElementById('dateInput').value; 
         
         let formattedDate = "";
+        let altDate = "";
+
         if(selectedDate) {
             let d = selectedDate.split("-");
-            // Hum teen tarah ke formats banayenge matching ke liye
-            formattedDate = `${d[2]}/${d[1]}/${d[0]}`; // 24/03/2026
-            var altDate = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`; // 24/3/2026 (बिना zero के)
+            // Standard format: 24/03/2026
+            formattedDate = `${d[2]}/${d[1]}/${d[0]}`; 
+            // Alt format for single digits: 24/3/2026
+            altDate = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`; 
         }
 
-        document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6'>Searching...</td></tr>";
+        document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6'>Searching... Please wait</td></tr>";
 
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getReportData&month=${selectedMonth}`);
@@ -83,13 +91,19 @@
             let html = "";
             let sD = 0, sP = 0, sB = 0;
 
+            if (!data.rows || data.rows.length === 0) {
+                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:orange;'>Is mahine ka koi record nahi mila.</td></tr>";
+                updateStats(0, 0, 0);
+                return;
+            }
+
             data.rows.forEach(r => {
                 let showRow = true;
                 
-                // Agar date select ki hai toh check karein
+                // Date Matching Logic
                 if(selectedDate !== "") {
-                    // Sheet mein column ka naam "Paid Date" ya "Date" hona chahiye
-                    let rowDate = r["Paid Date"] || r["Date"] || "";
+                    // Check both backend date properties
+                    let rowDate = r.date || r["Paid Date"] || r["Date"] || "";
                     if(rowDate !== formattedDate && rowDate !== altDate && rowDate !== selectedDate) {
                         showRow = false;
                     }
@@ -98,26 +112,37 @@
                 if(showRow) {
                     html += `<tr>
                         <td>${r.id}</td>
-                        <td style="text-align:left; color:blue;">${r.name}</td>
+                        <td style="text-align:left; color:blue; font-weight:bold;">${r.name}</td>
                         <td>${r.class}</td>
                         <td>₹${r.dues}</td>
                         <td style="color:green; font-weight:bold;">₹${r.paid}</td>
                         <td style="color:red; font-weight:bold;">₹${r.bal}</td>
                     </tr>`;
+                    
                     sD += parseFloat(r.dues || 0);
                     sP += parseFloat(r.paid || 0);
                     sB += parseFloat(r.bal || 0);
                 }
             });
 
-            document.getElementById('reportTableBody').innerHTML = html || "<tr><td colspan='6' style='color:orange;'>Is Taarikh ka koi data nahi mila.</td></tr>";
-            document.getElementById('totalD').innerText = "₹" + sD;
-            document.getElementById('totalP').innerText = "₹" + sP;
-            document.getElementById('totalB').innerText = "₹" + sB;
+            if(html === "") {
+                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:orange;'>Is Taarikh ka koi data nahi mila.</td></tr>";
+                updateStats(0, 0, 0);
+            } else {
+                document.getElementById('reportTableBody').innerHTML = html;
+                updateStats(sD, sP, sB);
+            }
 
         } catch (e) {
-            document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:red'>Error: URL check karein.</td></tr>";
+            console.error(e);
+            document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:red'>Error: Data fetch nahi ho paya. URL ya Internet check karein.</td></tr>";
         }
+    }
+
+    function updateStats(d, p, b) {
+        document.getElementById('totalD').innerText = "₹" + d;
+        document.getElementById('totalP').innerText = "₹" + p;
+        document.getElementById('totalB').innerText = "₹" + b;
     }
 </script>
 </body>
