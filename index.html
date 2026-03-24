@@ -20,26 +20,18 @@
 
         /* RECEIPT DESIGN (PINK & A4 LANDSCAPE SETUP) */
         #receipt-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 20px; }
-        
-        /* Landscape Wrapper */
         .print-wrapper { display: flex; justify-content: space-between; gap: 20px; width: 100%; max-width: 1100px; margin: 0 auto; }
-
-        .receipt-box { 
-            flex: 1; background: #ffdae9; border: 2px solid #000; padding: 15px; color: #000; 
-            position: relative; font-family: Arial, sans-serif;
-        }
-
-        .receipt-box::before { content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; background: url('YOUR_LOGO_URL') no-repeat center; background-size: contain; opacity: 0.15; z-index: 0; }
+        .receipt-box { flex: 1; background: #ffdae9; border: 2px solid #000; padding: 15px; color: #000; position: relative; font-family: Arial, sans-serif; }
         .receipt-inner { position: relative; z-index: 1; }
         .r-header { text-align: center; }
-        .r-header h2 { margin: 0; font-size: 20px; font-weight: 900; }
-        .r-header p { margin: 1px; font-size: 10px; font-weight: bold; }
+        .r-header h2 { margin: 0; font-size: 18px; font-weight: 900; }
+        .r-header p { margin: 1px; font-size: 9px; font-weight: bold; }
         .top-info { display: flex; justify-content: space-between; font-size: 10px; margin-top: 5px; border-bottom: 1px solid #000; padding-bottom: 2px; }
         .copy-tag { background: #000; color: #fff; padding: 2px 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; border-radius: 3px; }
-        .student-details { display: grid; grid-template-columns: 1fr 1fr; font-size: 11px; margin-top: 8px; line-height: 1.5; }
+        .student-details { display: grid; grid-template-columns: 1fr 1fr; font-size: 10px; margin-top: 8px; line-height: 1.5; }
         .r-table { width: 100%; border-collapse: collapse; margin-top: 5px; border: 1px solid #000; }
-        .r-table th, .r-table td { border: 1px solid #000; padding: 3px; font-size: 11px; }
-        .words-section { border-bottom: 1px dotted #000; padding: 3px 0; font-size: 11px; margin-top: 5px; font-style: italic; }
+        .r-table th, .r-table td { border: 1px solid #000; padding: 3px; font-size: 10px; }
+        .words-section { border-bottom: 1px dotted #000; padding: 3px 0; font-size: 10px; margin-top: 5px; font-style: italic; }
         .footer-sigs { display: flex; justify-content: space-between; margin-top: 30px; font-size: 10px; font-weight: bold; }
 
         @media print { 
@@ -138,6 +130,7 @@
     function numberToWords(num) {
         var a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
         var b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+        if (num == 0) return 'Zero';
         if ((num = num.toString()).length > 9) return '';
         var n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
         if (!n) return ''; var str = '';
@@ -186,6 +179,7 @@
 
     async function saveData() {
         let subTotal = document.getElementById('sub_t').value;
+        let discount = document.getElementById('Discount').value || 0;
         let remaining = document.getElementById('ui_due').innerText;
         let data = {
             "Month": document.getElementById('Month').value,
@@ -203,9 +197,9 @@
             "School Bag": document.getElementById('School Bag').value || 0,
             "Development Fee": document.getElementById('Development Fee').value || 0,
             "Other Fee": document.getElementById('Other Fee').value || 0,
-            "Discount": document.getElementById('Discount').value || 0,
+            "Discount": discount, // Post to sheet
             "Total Paid": document.getElementById('Total Paid').value || 0,
-            "Sub Total": subTotal, // Fixed: Ab ye Sheet me post hoga
+            "Sub Total": subTotal, 
             "Remaining": remaining
         };
         document.querySelectorAll('tr[data-h]').forEach(row => { data[row.getAttribute('data-h')] = row.querySelector('.a-in').value || 0; });
@@ -220,7 +214,6 @@
         const main = ["Prev Dues", "Admission Fee", "School Fee", "School Van Fee", "Hostel & School Fee", "Exam Fee"];
         main.forEach(k => { if(d[k]>0) rows += `<tr><td align="center">${sl++}.</td><td>${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; });
         
-        // Uni & Books
         let uniRows = document.querySelectorAll('tr[data-type="uni"]');
         if(uniRows.length > 0) {
             rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Uniform Fee</b></td></tr>`;
@@ -240,10 +233,10 @@
                 <div class="r-header">
                     <div style="display:flex; justify-content:space-between;"><span class="copy-tag">${type}</span><span style="font-size:9px">UDISE: 10101122703</span></div>
                     <h2>SAGAR PUBLIC SCHOOL</h2>
-                <p>QUAZITOLA, BARSOI (KATIHAR)</p>
-                <p>email: sagarpublicschool2023@gmail.com</p>
-                <p>RTE Registration No.21211472023218114225 | UDISE No.10101122703</p>
-            </div>
+                    <p>QUAZITOLA, BARSOI (KATIHAR)</p>
+                    <p style="font-size:8px">email: sagarpublicschool2023@gmail.com</p>
+                    <p style="font-size:7px">RTE Reg No.21211472023218114225 | UDISE No.10101122703</p>
+                </div>
                 <div class="top-info"><span>Sl: A-1711</span><span>Date: ${new Date().toLocaleDateString('en-GB')}</span></div>
                 <div class="student-details">
                     <div><b>Name:</b> ${d["Student Name"]}</div><div><b>ID:</b> ${d["Student Id"]}</div>
@@ -255,8 +248,9 @@
                     <tbody>${rows}</tbody>
                     <tfoot>
                         <tr><th colspan="3" align="right">Sub Total</th><td align="center">${d["Sub Total"]}</td></tr>
-                        <tr><th colspan="3" align="right">Paid</th><td align="center"><b>${d["Total Paid"]}</b></td></tr>
-                        <tr><th colspan="3" align="right">Due</th><td align="center" style="color:red"><b>${d["Remaining"]}</b></td></tr>
+                        <tr><th colspan="3" align="right">Discount (-)</th><td align="center">${d["Discount"]}</td></tr>
+                        <tr><th colspan="3" align="right">Net Paid</th><td align="center"><b>${d["Total Paid"]}</b></td></tr>
+                        <tr><th colspan="3" align="right">Due Balance</th><td align="center" style="color:red"><b>${d["Remaining"]}</b></td></tr>
                     </tfoot>
                 </table>
                 <div class="words-section"><b>Words:</b> ${numberToWords(d["Total Paid"])} Only.</div>
