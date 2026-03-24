@@ -266,32 +266,46 @@
         showDualReceipt(data);
     }
 
-    function generateReceiptHTML(d, type) {
+        function generateReceiptHTML(d, type) {
         let sl = 1; let rows = "";
         const main = ["Prev Dues", "Admission Fee", "School Fee", "School Van Fee", "Hostel & School Fee", "Exam Fee"];
-        main.forEach(k => { if(d[k]>0) rows += `<tr><td align="center">${sl++}.</td><td>${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; });
         
-        // Handling dynamic rows from record or DOM
-        const headers = Object.keys(d);
-        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel & School Fee","Exam Fee","School Bag","Discount","Total Paid","Total Dues","Remaining","Paid Date","School Van Fee","Development Fee","Other Fee","Sub Total"];
+        // 1-6 Regular Fees
+        main.forEach(k => { 
+            if(d[k] > 0) rows += `<tr><td align="center">${sl++}.</td><td>${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; 
+        });
         
-        headers.forEach(h => {
-            if(!exclude.includes(h) && d[h] > 0) {
-                 rows += `<tr><td align="center">${sl++}.</td><td>${h}</td><td align="center">1</td><td align="center">${d[h]}</td></tr>`;
-            }
+        // 7. School Uniform Fee (i, ii, iii format)
+        const uniItems = Object.keys(d).filter(k => ["Shirts", "Pants", "T-Shirts", "Trousers"].includes(k) && d[k] > 0);
+        if(uniItems.length > 0) {
+            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Uniform Fee</b></td></tr>`;
+            uniItems.forEach((item, index) => {
+                rows += `<tr><td></td><td>(${roman(index + 1)}) ${item}</td><td align="center">1</td><td align="center">${d[item]}</td></tr>`;
+            });
+        }
+
+        // 8. School Books (i, ii, iii format)
+        const bookItems = Object.keys(d).filter(k => ["Books Fee", "Copies", "Cover", "Instrument Box"].includes(k) && d[k] > 0);
+        if(bookItems.length > 0) {
+            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Books</b></td></tr>`;
+            bookItems.forEach((item, index) => {
+                rows += `<tr><td></td><td>(${roman(index + 1)}) ${item}</td><td align="center">1</td><td align="center">${d[item]}</td></tr>`;
+            });
+        }
+
+        // 9-11 Other Fees
+        const extra = ["School Bag", "Development Fee", "Other Fee"];
+        extra.forEach(k => { 
+            if(d[k] > 0) rows += `<tr><td align="center">${sl++}.</td><td>${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; 
         });
 
-        const extra = ["School Bag", "Development Fee", "Other Fee"];
-        extra.forEach(k => { if(d[k]>0) rows += `<tr><td align="center">${sl++}.</td><td>${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; });
-
+        // Baaki ka return code waisa hi rahega jaisa pehle tha
         return `
             <div class="receipt-inner">
                 <div class="r-header">
                     <div style="display:flex; justify-content:space-between;"><span class="copy-tag">${type}</span><span style="font-size:9px">UDISE: 10101122703</span></div>
                     <h2>SAGAR PUBLIC SCHOOL</h2>
                     <p>QUAZITOLA, BARSOI (KATIHAR)</p>
-                    <p style="font-size:8px">email: sagarpublicschool2023@gmail.com</p>
-                    <p style="font-size:7px">RTE Reg No.21211472023218114225 | UDISE No.10101122703</p>
                 </div>
                 <div class="top-info"><span>Sl: A-1711</span><span>Date: ${new Date().toLocaleDateString('en-GB')}</span></div>
                 <div class="student-details">
