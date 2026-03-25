@@ -18,32 +18,34 @@
 
         /* Full Dynamic Table Wrapper */
         .t-wrap { overflow: auto; height: 80vh; border: 1px solid #ddd; position: relative; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 11px; white-space: nowrap; }
         
-        /* Spreadsheet Style Header */
+        /* 1. TOP HEADER STICKY (Naya badlav) */
         thead th { 
-            background: #1a237e; color: #ffffff; padding: 8px 12px; 
-            border: 1px solid #ffffff; position: sticky; top: 0; z-index: 10;
+            background: #1a237e; color: #ffffff; padding: 10px 12px; 
+            border: 1px solid #ddd; position: sticky; top: 0; z-index: 100;
         }
         
         td { padding: 6px 10px; border: 1px solid #ddd; text-align: center; background: #fff; }
 
-        /* Sticky ID & Name (First 3 columns) */
-        .sticky-col { position: sticky; left: 0; background: #f1f1f1 !important; z-index: 5; border-right: 2px solid #bbb !important; }
-        th.sticky-col { z-index: 11; top: 0; }
-        
-        /* Logic for Name column sticky (approx offset) */
-        td:nth-child(3), th:nth-child(3) { position: sticky; left: 45px; z-index: 5; background: #f1f1f1 !important; border-right: 2px solid #bbb !important; }
-        th:nth-child(3) { z-index: 11; }
+        /* 2. LEFT COLUMNS STICKY (ID, Name, Father Name) */
+        /* Student ID (Col 1) */
+        .st-id { position: sticky; left: 0; z-index: 50; background: #f1f1f1 !important; border-right: 1px solid #ccc !important; }
+        /* Student Name (Col 3) - Index 2 */
+        .st-name { position: sticky; left: 50px; z-index: 50; background: #f1f1f1 !important; border-right: 1px solid #ccc !important; }
+        /* Father Name (Col 4) - Index 3 */
+        .st-father { position: sticky; left: 160px; z-index: 50; background: #f1f1f1 !important; border-right: 2px solid #bbb !important; }
 
-        /* Dynamic Grand Total Footer */
+        /* Corner Sticky (Headers jo sticky columns ke upar hain) */
+        th.st-id, th.st-name, th.st-father { z-index: 110; top: 0; }
+
+        /* 3. BOTTOM FOOTER STICKY (TOTAL ROW) */
         .total-row td { 
             background: #ffc107 !important; font-weight: bold; color: #000; 
-            position: sticky; bottom: 0; z-index: 10;
+            position: sticky; bottom: 0; z-index: 90;
             border-top: 2px solid #000;
         }
         
-        /* Row Highlighting */
         tr:nth-child(even) td { background: #fafafa; }
         tr:hover td { background: #e3f2fd !important; }
 
@@ -98,7 +100,7 @@
             aDate = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`; 
         }
 
-        document.getElementById('tableBody').innerHTML = "<tr><td colspan='40'>Syncing with Google Sheet (Column A to AI)...</td></tr>";
+        document.getElementById('tableBody').innerHTML = "<tr><td colspan='40'>Syncing with Google Sheet...</td></tr>";
 
         try {
             const res = await fetch(`${WEB_APP_URL}?action=getReportData&month=${month}`);
@@ -109,26 +111,27 @@
                 return;
             }
 
-            // 1. Dynamic Headers (Automatic identification of all columns from Sheet)
             const headers = Object.keys(data.rows[0]);
 
-            // 2. Date Filter Logic
             let filtered = data.rows.filter(r => {
                 if(!dateVal) return true;
                 let rowD = r.date || r["Paid Date"] || r["Date"] || "";
                 return (rowD === fDate || rowD === aDate || rowD === dateVal);
             });
 
-            // 3. Render Headers
+            // --- Header Generation ---
             let hHtml = "<tr>";
             headers.forEach((h, i) => {
-                let cls = (i === 0) ? "sticky-col" : "";
+                let cls = "";
+                if(i === 0) cls = "st-id";
+                if(i === 2) cls = "st-name";
+                if(i === 3) cls = "st-father"; // Father Name Column Sticky
                 hHtml += `<th class="${cls}">${h}</th>`;
             });
             hHtml += "</tr>";
             document.getElementById('headerRow').innerHTML = hHtml;
 
-            // 4. Render Body & Sum ALL numeric columns
+            // --- Body Generation ---
             let bHtml = "";
             let sums = {};
             headers.forEach(h => sums[h] = 0);
@@ -137,16 +140,17 @@
                 bHtml += "<tr>";
                 headers.forEach((h, i) => {
                     let val = row[h] === undefined || row[h] === null ? "" : row[h];
-                    let cls = (i === 0) ? "sticky-col" : "";
+                    let cls = "";
+                    if(i === 0) cls = "st-id";
+                    if(i === 2) cls = "st-name";
+                    if(i === 3) cls = "st-father";
                     
-                    // Highlights for Paid vs Dues
                     let style = "";
                     if(h.toLowerCase().includes("paid")) style = "color: green; font-weight:bold;";
                     if(h.toLowerCase().includes("bal") || h.toLowerCase().includes("rem")) style = "color: red; font-weight:bold;";
                     
                     bHtml += `<td class="${cls}" style="${style}">${val}</td>`;
                     
-                    // AUTO-SUM Logic: If column is NOT a text field, add it to sums
                     let skipFields = ["id", "student id", "class", "name", "student name", "father name", "address", "date", "paid date", "month"];
                     if(!skipFields.includes(h.toLowerCase())) {
                         let num = parseFloat(val);
@@ -157,12 +161,18 @@
             });
             document.getElementById('tableBody').innerHTML = bHtml;
 
-            // 5. Dynamic Footer (Total of every numeric column)
+            // --- Footer Generation ---
             let fHtml = "<tr class='total-row'>";
             headers.forEach((h, i) => {
-                let cls = (i === 0) ? "sticky-col" : "";
+                let cls = "";
+                if(i === 0) cls = "st-id";
+                if(i === 2) cls = "st-name";
+                if(i === 3) cls = "st-father";
+
                 if(i === 0) fHtml += `<td class="${cls}">TOTAL</td>`;
-                else if (h.toLowerCase().includes("name")) fHtml += `<td class="${cls}">${filtered.length} Students</td>`;
+                else if (h.toLowerCase().includes("name") && !h.toLowerCase().includes("father")) {
+                     fHtml += `<td class="${cls}">${filtered.length} Stud.</td>`;
+                }
                 else {
                     let skipFields = ["id", "student id", "class", "father name", "address", "date", "paid date", "month"];
                     if(skipFields.includes(h.toLowerCase())) {
@@ -176,7 +186,7 @@
             document.getElementById('footerRow').innerHTML = fHtml;
 
         } catch (e) {
-            document.getElementById('tableBody').innerHTML = "<tr><td colspan='40'>Error: Connection failed. Check Web App.</td></tr>";
+            document.getElementById('tableBody').innerHTML = "<tr><td colspan='40'>Error: Connection failed.</td></tr>";
         }
     }
 </script>
