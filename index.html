@@ -73,7 +73,7 @@
         <div><label>School Van Fee</label><input type="number" class="calc-total" id="School Van Fee" oninput="calculate()"></div>
     </div>
     <div class="grid-row">
-        <div><label>Hostel & School Fee</label><input type="number" class="calc-total" id="Hostel & School Fee" oninput="calculate()"></div>
+        <div><label>Hostel Fee</label><input type="number" class="calc-total" id="Hostel Fee" oninput="calculate()"></div>
         <div><label>Exam Fee</label><input type="number" class="calc-total" id="Exam Fee" oninput="calculate()"></div>
     </div>
 
@@ -84,19 +84,23 @@
     </div>
     <table class="fee-table"><tbody id="uni-body"></tbody></table>
 
-    <div class="section-title">7. School Books</div>
+    <div class="section-title">7. School Books & Others</div>
     <div style="display:flex; gap:5px; margin-bottom:5px;">
         <select id="book-dropdown"><option value="">Loading...</option></select>
         <button onclick="addRow('book')" style="background:var(--p); color:white; border:none; padding:5px 12px; border-radius:4px;">ADD</button>
     </div>
     <table class="fee-table"><tbody id="book-body"></tbody></table>
 
-    <div class="section-title">8-10. Other Fees</div>
-    <div class="grid-row">
-        <div><label>8. School Bag</label><input type="number" class="calc-total" id="School Bag" oninput="calculate()"></div>
-        <div><label>9. Development Fee</label><input type="number" class="calc-total" id="Development Fee" oninput="calculate()"></div>
+    <div class="section-title">8. Other Fee</div>
+    <div style="display:flex; gap:5px; margin-bottom:5px;">
+        <select id="other-dropdown"><option value="">Loading...</option></select>
+        <button onclick="addRow('other')" style="background:var(--p); color:white; border:none; padding:5px 12px; border-radius:4px;">ADD</button>
     </div>
-    <div><label>10. Other Fee</label><input type="number" class="calc-total" id="Other Fee" oninput="calculate()"></div>
+    <div class="grid-row">
+        <div><label>9. School Bag</label><input type="number" class="calc-total" id="School Bag" oninput="calculate()"></div>
+        <div><label>10. Development Fee</label><input type="number" class="calc-total" id="Development Fee" oninput="calculate()"></div>
+    </div>
+    <div><label>11. Miscellaneous Fee</label><input type="number" class="calc-total" id="Other Fee" oninput="calculate()"></div>
 
     <div class="total-box">
         <div class="grid-row">
