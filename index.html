@@ -159,7 +159,7 @@
         const res = await fetch(`${SCRIPT_URL}?action=getHeaders&month=${m}`);
         const headers = await res.json();
         // Updated exclusion list to avoid redundancy
-        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel & School Fee","Exam Fee","School Bag","Discount","Total Paid","Total Dues","Remaining","Paid Date","School Van Fee","Development Fee","Other Fee","Sub Total", "Republic Day Fee", "Independence Day Fee", "UDISE Fee"];
+        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel Fee","Exam Fee","School Bag","Discount","Total Paid","Total Dues","Remaining","Paid Date","School Van Fee","Development Fee","Other Fee","Sub Total", "Republic Day Fee", "Independence Day Fee", "UDISE Fee"];
         let uniHtml = '<option value="">Select Uniform</option>';
         let bookHtml = '<option value="">Select Books</option>';
         headers.forEach(h => { if(h && !exclude.includes(h)) { uniHtml += `<option value="${h}">${h}</option>`; bookHtml += `<option value="${h}">${h}</option>`; } });
@@ -209,7 +209,7 @@
             "Admission Fee": document.getElementById('Admission Fee').value || 0,
             "School Fee": document.getElementById('School Fee').value || 0,
             "School Van Fee": document.getElementById('School Van Fee').value || 0,
-            "Hostel & School Fee": document.getElementById('Hostel & School Fee').value || 0,
+            "Hostel Fee": document.getElementById('Hostel Fee').value || 0,
             "Exam Fee": document.getElementById('Exam Fee').value || 0,
             "School Bag": document.getElementById('School Bag').value || 0,
             "Development Fee": document.getElementById('Development Fee').value || 0,
@@ -232,7 +232,7 @@
 
     function generateReceiptHTML(d, type) {
         let sl = 1; let rows = "";
-        const main = ["Prev Dues", "Admission Fee", "School Fee", "School Van Fee", "Hostel & School Fee", "Exam Fee"];
+        const main = ["Prev Dues", "Admission Fee", "School Fee", "School Van Fee", "Hostel Fee", "Exam Fee"];
         main.forEach(k => { if(d[k]>0) rows += `<tr><td align="center">${sl++}.</td><td>${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; });
         
         // Render Uniform rows
