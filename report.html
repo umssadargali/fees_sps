@@ -5,28 +5,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --p: #1a237e; --bg: #f4f7f6; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 950px; margin: auto; }
-        .filter-row { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; align-items: flex-end; background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 98%; margin: auto; }
+        .filter-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; align-items: flex-end; background: #f8f9fa; padding: 15px; border-radius: 8px; }
         .f-group { display: flex; flex-direction: column; }
         label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 5px; }
-        select, input { padding: 10px; border-radius: 6px; border: 1px solid #ccc; outline: none; }
-        .stats { display: flex; gap: 10px; margin-bottom: 20px; }
-        .stat-box { flex: 1; padding: 15px; border-radius: 8px; text-align: center; color: white; font-weight: bold; }
-        .t-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: var(--p); color: white; padding: 12px; border: 1px solid #ddd; }
-        td { padding: 10px; border: 1px solid #ddd; background: #fff; text-align: center; }
-        .btn-show { background: var(--p); color: white; border: none; padding: 11px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-show:active { transform: scale(0.98); }
+        select, input { padding: 8px; border-radius: 6px; border: 1px solid #ccc; outline: none; font-size: 13px; }
+        
+        /* Table Styles */
+        .t-wrap { overflow-x: auto; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+        th { background: var(--p); color: white; padding: 10px; border: 1px solid #ddd; position: sticky; top: 0; }
+        td { padding: 8px; border: 1px solid #ddd; background: #fff; text-align: center; }
+        
+        /* Total Row Styling */
+        .total-row td { background: #fff9c4; font-weight: bold; color: #000; border-top: 2px solid #000; }
+        .btn-show { background: var(--p); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        
+        .sticky-col { position: sticky; left: 0; background: #fff !important; z-index: 10; border-right: 2px solid #ddd !important; }
+        th.sticky-col { background: var(--p) !important; z-index: 11; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h3 style="text-align:center; color:var(--p); margin-top:0;">Daily & Monthly Collection</h3>
+    <h3 style="text-align:center; color:var(--p); margin: 0 0 15px 0;">Dynamic Fee Report</h3>
     
-    <div class="filter-row">
+    <div class="filter-row no-print">
         <div class="f-group">
             <label>1. SELECT MONTH</label>
             <select id="monthInput">
@@ -41,30 +46,21 @@
             <input type="date" id="dateInput">
         </div>
         <button class="btn-show" onclick="loadReport()">SHOW REPORT</button>
-    </div>
-
-    <div class="stats">
-        <div class="stat-box" style="background:#3949ab">Total Dues<br><span id="totalD">₹0</span></div>
-        <div class="stat-box" style="background:#43a047">Total Paid<br><span id="totalP">₹0</span></div>
-        <div class="stat-box" style="background:#e53935">Remaining<br><span id="totalB">₹0</span></div>
+        <button class="btn-show" style="background:#2e7d32;" onclick="window.print()">PRINT REPORT</button>
     </div>
 
     <div class="t-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th><th>Name</th><th>Class</th><th>Sub Total</th><th>Paid</th><th>Bal</th>
-                </tr>
-            </thead>
+        <table id="mainTable">
+            <thead id="reportHeader"></thead>
             <tbody id="reportTableBody">
-                <tr><td colspan="6" style="padding:20px; color:#666;">Select filters and click Show Report</td></tr>
+                <tr><td style="padding:20px; color:#666;">Select filters and click Show Report</td></tr>
             </tbody>
+            <tfoot id="reportFooter"></tfoot>
         </table>
     </div>
 </div>
 
 <script>
-    // Aapka naya Web App URL
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLK7x1LSLSzKqPiQOBT1-3h1SyG8hqmRAOoUdzJaYJ8s4MRQGPzv4Uf2c_yJreh-41/exec";
 
     async function loadReport() {
@@ -73,76 +69,96 @@
         
         let formattedDate = "";
         let altDate = "";
-
         if(selectedDate) {
             let d = selectedDate.split("-");
-            // Standard format: 24/03/2026
             formattedDate = `${d[2]}/${d[1]}/${d[0]}`; 
-            // Alt format for single digits: 24/3/2026
             altDate = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`; 
         }
 
-        document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6'>Searching... Please wait</td></tr>";
+        document.getElementById('reportTableBody').innerHTML = "<tr><td>Searching... Please wait</td></tr>";
+        document.getElementById('reportHeader').innerHTML = "";
+        document.getElementById('reportFooter').innerHTML = "";
 
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getReportData&month=${selectedMonth}`);
             const data = await response.json();
             
-            let html = "";
-            let sD = 0, sP = 0, sB = 0;
-
             if (!data.rows || data.rows.length === 0) {
-                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:orange;'>Is mahine ka koi record nahi mila.</td></tr>";
-                updateStats(0, 0, 0);
+                document.getElementById('reportTableBody').innerHTML = "<tr><td style='color:orange;'>Is mahine ka koi record nahi mila.</td></tr>";
                 return;
             }
 
-            data.rows.forEach(r => {
-                let showRow = true;
-                
-                // Date Matching Logic
-                if(selectedDate !== "") {
-                    // Check both backend date properties
-                    let rowDate = r.date || r["Paid Date"] || r["Date"] || "";
-                    if(rowDate !== formattedDate && rowDate !== altDate && rowDate !== selectedDate) {
-                        showRow = false;
-                    }
-                }
+            // 1. Identify Columns (Excluding some system columns if needed)
+            const allKeys = Object.keys(data.rows[0]);
+            const displayKeys = allKeys.filter(k => k !== "date" && k !== "Paid Date" && k !== "Date");
 
-                if(showRow) {
-                    html += `<tr>
-                        <td>${r.id}</td>
-                        <td style="text-align:left; color:blue; font-weight:bold;">${r.name}</td>
-                        <td>${r.class}</td>
-                        <td>₹${r.dues}</td>
-                        <td style="color:green; font-weight:bold;">₹${r.paid}</td>
-                        <td style="color:red; font-weight:bold;">₹${r.bal}</td>
-                    </tr>`;
-                    
-                    sD += parseFloat(r.dues || 0);
-                    sP += parseFloat(r.paid || 0);
-                    sB += parseFloat(r.bal || 0);
-                }
+            // 2. Filter Rows based on Date
+            let filteredRows = data.rows.filter(r => {
+                if(!selectedDate) return true;
+                let rowDate = r.date || r["Paid Date"] || r["Date"] || "";
+                return (rowDate === formattedDate || rowDate === altDate || rowDate === selectedDate);
             });
 
-            if(html === "") {
-                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:orange;'>Is Taarikh ka koi data nahi mila.</td></tr>";
-                updateStats(0, 0, 0);
-            } else {
-                document.getElementById('reportTableBody').innerHTML = html;
-                updateStats(sD, sP, sB);
+            if(filteredRows.length === 0) {
+                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='100' style='color:orange;'>Is Taarikh ka koi data nahi mila.</td></tr>";
+                return;
             }
+
+            // 3. Build Header
+            let headHtml = "<tr>";
+            displayKeys.forEach((k, index) => {
+                let stickyClass = (index < 2) ? "sticky-col" : ""; // ID and Name sticky
+                headHtml += `<th class="${stickyClass}">${k}</th>`;
+            });
+            headHtml += "</tr>";
+            document.getElementById('reportHeader').innerHTML = headHtml;
+
+            // 4. Build Body & Calculate Totals
+            let bodyHtml = "";
+            let totals = {};
+            displayKeys.forEach(k => totals[k] = 0);
+
+            filteredRows.forEach(r => {
+                bodyHtml += "<tr>";
+                displayKeys.forEach((k, index) => {
+                    let val = r[k] || 0;
+                    let stickyClass = (index < 2) ? "sticky-col" : "";
+                    
+                    // Style numeric values
+                    let style = "";
+                    if(k === "Student Name") style = 'style="text-align:left; font-weight:600; color:blue;"';
+                    if(k === "Total Paid" || k === "paid") style = 'style="color:green; font-weight:bold;"';
+                    if(k === "Remaining" || k === "bal") style = 'style="color:red; font-weight:bold;"';
+
+                    bodyHtml += `<td class="${stickyClass}" ${style}>${val}</td>`;
+                    
+                    // Add to total if numeric
+                    if(!isNaN(parseFloat(val)) && k !== "Student Id" && k !== "id" && k !== "Class" && k !== "class") {
+                        totals[k] += parseFloat(val);
+                    }
+                });
+                bodyHtml += "</tr>";
+            });
+            document.getElementById('reportTableBody').innerHTML = bodyHtml;
+
+            // 5. Build Footer (Grand Totals)
+            let footHtml = "<tr class='total-row'>";
+            displayKeys.forEach((k, index) => {
+                let stickyClass = (index < 2) ? "sticky-col" : "";
+                if(index === 0) footHtml += `<td class="${stickyClass}">TOTAL</td>`;
+                else if(index === 1) footHtml += `<td class="${stickyClass}">${filteredRows.length} Students</td>`;
+                else {
+                    let totalVal = totals[k];
+                    footHtml += `<td>${totalVal > 0 ? "₹" + totalVal.toFixed(0) : "-"}</td>`;
+                }
+            });
+            footHtml += "</tr>";
+            document.getElementById('reportFooter').innerHTML = footHtml;
 
         } catch (e) {
             console.error(e);
-            document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='6' style='color:red'>Error: Data fetch nahi ho paya. URL ya Internet check karein.</td></tr>";
+            document.getElementById('reportTableBody').innerHTML = "<tr><td style='color:red'>Error fetching data.</td></tr>";
         }
-    }
-
-    function updateStats(d, p, b) {
-        document.getElementById('totalD').innerText = "₹" + d;
-        document.getElementById('totalP').innerText = "₹" + p;
-        document.getElementById('totalB').innerText = "₹" + b;
     }
 </script>
 </body>
