@@ -5,7 +5,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* INTERFACE STYLES (NO CHANGE) */
+        /* INTERFACE STYLES */
         :root { --p: #1a237e; --bg: #f4f7f6; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-top: 50px; }
         .nav { background: var(--p); padding: 10px; position: fixed; top: 0; width: 100%; z-index: 1000; text-align: center; color: white; font-weight: bold; }
@@ -18,7 +18,7 @@
         .total-box { background: #fff9c4; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #fbc02d; }
         .btn-save { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 15px; cursor: pointer; font-size: 16px; }
 
-        /* RECEIPT DESIGN (PINK & A4 LANDSCAPE SETUP) */
+        /* RECEIPT DESIGN */
         #receipt-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 20px; }
         .print-wrapper { display: flex; justify-content: space-between; gap: 20px; width: 100%; max-width: 1100px; margin: 0 auto; }
         .receipt-box { flex: 1; background: #ffdae9; border: 2px solid #000; padding: 15px; color: #000; position: relative; font-family: Arial, sans-serif; }
@@ -93,13 +93,21 @@
 
     <div class="section-title">8. Other Fee</div>
     <div style="display:flex; gap:5px; margin-bottom:5px;">
-        <select id="oth-dropdown"><option value="">Loading...</option></select>
+        <select id="oth-dropdown">
+            <option value="">Select Other Fee...</option>
+            <option value="Republic Day Fee">Republic Day Fee</option>
+            <option value="Independence Day Fee">Independence Day Fee</option>
+            <option value="UDISE Fee">UDISE Fee</option>
+        </select>
         <button onclick="addRow('oth')" style="background:var(--p); color:white; border:none; padding:5px 12px; border-radius:4px;">ADD</button>
     </div>
     <table class="fee-table"><tbody id="oth-body"></tbody></table>
     
+    <div class="section-title">Additional Fees</div>
+    <div class="grid-row">
         <div><label>9. School Bag</label><input type="number" class="calc-total" id="School Bag" oninput="calculate()"></div>
         <div><label>10. Development Fee</label><input type="number" class="calc-total" id="Development Fee" oninput="calculate()"></div>
+    </div>
     <div><label>11. Miscellaneous Fee</label><input type="number" class="calc-total" id="Other Fee" oninput="calculate()"></div>
 
     <div class="total-box">
@@ -121,7 +129,7 @@
         <div class="receipt-box" id="office-copy"></div>
     </div>
     <div class="no-print" style="text-align:center; margin-top:20px;">
-        <button onclick="if(window.AndroidPrint){ AndroidPrint.triggerPrint(); } else { window.print(); }" style="padding:12px 30px; background:var(--green); color:red; border:none; cursor:pointer; font-weight:bold; border-radius:5px;">PRINT / SAVE PDF</button>
+        <button onclick="if(window.AndroidPrint){ AndroidPrint.triggerPrint(); } else { window.print(); }" style="padding:12px 30px; background:#2e7d32; color:white; border:none; cursor:pointer; font-weight:bold; border-radius:5px;">PRINT / SAVE PDF</button>
         <button onclick="location.reload()" style="padding:10px 40px; background:#666; color:white; border:none; border-radius:4px; margin-left:10px; cursor:pointer;">CLOSE</button>
     </div>
 </div>
@@ -150,7 +158,8 @@
         const m = document.getElementById('Month').value;
         const res = await fetch(`${SCRIPT_URL}?action=getHeaders&month=${m}`);
         const headers = await res.json();
-        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel & School Fee","Exam Fee","School Bag","Discount","Total Paid","Total Dues","Remaining","Paid Date","School Van Fee","Development Fee","Other Fee","Sub Total"];
+        // Updated exclusion list to avoid redundancy
+        const exclude = ["Student Id","Month","Student Name","Father Name","Class","Address","Prev Dues","Admission Fee","School Fee","Hostel & School Fee","Exam Fee","School Bag","Discount","Total Paid","Total Dues","Remaining","Paid Date","School Van Fee","Development Fee","Other Fee","Sub Total", "Republic Day Fee", "Independence Day Fee", "UDISE Fee"];
         let uniHtml = '<option value="">Select Uniform</option>';
         let bookHtml = '<option value="">Select Books</option>';
         headers.forEach(h => { if(h && !exclude.includes(h)) { uniHtml += `<option value="${h}">${h}</option>`; bookHtml += `<option value="${h}">${h}</option>`; } });
@@ -174,7 +183,11 @@
 
     function calculate() {
         let sub = 0;
+        // Collects regular inputs
         document.querySelectorAll('.calc-total').forEach(i => sub += parseFloat(i.value) || 0);
+        // Collects dynamic table inputs (Uniform, Books, Others)
+        document.querySelectorAll('.a-in').forEach(i => sub += parseFloat(i.value) || 0);
+        
         document.getElementById('sub_t').value = sub;
         let disc = parseFloat(document.getElementById('Discount').value) || 0;
         let paid = parseFloat(document.getElementById('Total Paid').value) || 0;
@@ -201,12 +214,16 @@
             "School Bag": document.getElementById('School Bag').value || 0,
             "Development Fee": document.getElementById('Development Fee').value || 0,
             "Other Fee": document.getElementById('Other Fee').value || 0,
-            "Discount": discount, // Post to sheet
+            "Discount": discount,
             "Total Paid": document.getElementById('Total Paid').value || 0,
             "Sub Total": subTotal, 
             "Remaining": remaining
         };
-        document.querySelectorAll('tr[data-h]').forEach(row => { data[row.getAttribute('data-h')] = row.querySelector('.a-in').value || 0; });
+        
+        // Dynamic scan for ALL tables (uni, book, oth)
+        document.querySelectorAll('tr[data-h]').forEach(row => { 
+            data[row.getAttribute('data-h')] = row.querySelector('.a-in').value || 0; 
+        });
         
         Swal.fire({title:'Saving Data...', didOpen:()=>Swal.showLoading()});
         await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
@@ -218,15 +235,23 @@
         const main = ["Prev Dues", "Admission Fee", "School Fee", "School Van Fee", "Hostel & School Fee", "Exam Fee"];
         main.forEach(k => { if(d[k]>0) rows += `<tr><td align="center">${sl++}.</td><td>${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; });
         
+        // Render Uniform rows
         let uniRows = document.querySelectorAll('tr[data-type="uni"]');
         if(uniRows.length > 0) {
             rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Uniform Fee</b></td></tr>`;
             uniRows.forEach((row, i) => { rows += `<tr><td></td><td>(${roman(i+1)}) ${row.getAttribute('data-h')}</td><td align="center">${row.querySelector('.q-in').value}</td><td align="center">${row.querySelector('.a-in').value}</td></tr>`; });
         }
+        // Render Book rows
         let bookRows = document.querySelectorAll('tr[data-type="book"]');
         if(bookRows.length > 0) {
             rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Books</b></td></tr>`;
             bookRows.forEach((row, i) => { rows += `<tr><td></td><td>(${roman(i+1)}) ${row.getAttribute('data-h')}</td><td align="center">${row.querySelector('.q-in').value}</td><td align="center">${row.querySelector('.a-in').value}</td></tr>`; });
+        }
+        // Render Other Fee rows
+        let othRows = document.querySelectorAll('tr[data-type="oth"]');
+        if(othRows.length > 0) {
+            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>Other Fees</b></td></tr>`;
+            othRows.forEach((row, i) => { rows += `<tr><td></td><td>(${roman(i+1)}) ${row.getAttribute('data-h')}</td><td align="center">${row.querySelector('.q-in').value}</td><td align="center">${row.querySelector('.a-in').value}</td></tr>`; });
         }
 
         const extra = ["School Bag", "Development Fee", "Other Fee"];
