@@ -8,7 +8,6 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 98%; margin: auto; }
         
-        /* Header & Filters */
         .header-box { text-align: center; margin-bottom: 15px; }
         .filter-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; align-items: flex-end; background: #f8f9fa; padding: 15px; border-radius: 8px; }
         .f-group { display: flex; flex-direction: column; }
@@ -16,36 +15,32 @@
         select, input { padding: 8px; border-radius: 6px; border: 1px solid #ccc; outline: none; font-size: 13px; }
         
         /* Full Sheet Style Table */
-        .t-wrap { overflow-x: auto; height: 70vh; border: 1px solid #ccc; background: #fff; }
+        .t-wrap { overflow: auto; height: 75vh; border: 1px solid #ccc; background: #fff; position: relative; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
         
-        /* Google Sheet Style Headers */
         th { 
-            background: #e8eaed; color: #333; padding: 8px 12px; 
-            border: 1px solid #ccc; position: sticky; top: 0; z-index: 5;
-            font-weight: 600; text-transform: capitalize;
+            background: #1a237e; color: #fff; padding: 10px 15px; 
+            border: 1px solid #ccc; position: sticky; top: 0; z-index: 10;
+            font-weight: 600;
         }
         
-        td { padding: 6px 12px; border: 1px solid #ddd; text-align: center; background: #fff; }
+        td { padding: 8px 15px; border: 1px solid #ddd; text-align: center; background: #fff; }
         
-        /* Row Highlighting */
-        tr:nth-child(even) td { background: #f9f9f9; }
-        tr:hover td { background: #e3f2fd !important; }
+        /* Sticky Left Columns (ID & Name) */
+        .sticky-id { position: sticky; left: 0; background: #f1f1f1 !important; z-index: 9; border-right: 2px solid #bbb !important; }
+        .sticky-name { position: sticky; left: 50px; background: #f1f1f1 !important; z-index: 9; border-right: 2px solid #bbb !important; text-align: left; }
+        th.sticky-id { z-index: 11; top: 0; }
+        th.sticky-name { z-index: 11; top: 0; }
 
-        /* Total Row (Live Footer) */
+        /* Total Row (Sticky at bottom) */
         .total-row td { 
-            background: #fbbc04 !important; /* Google Yellow */
-            font-weight: bold; color: #000; 
-            position: sticky; bottom: 0; z-index: 6;
+            background: #fbbc04 !important; font-weight: bold; color: #000; 
+            position: sticky; bottom: 0; z-index: 10;
             border-top: 2px solid #333;
         }
         
         .btn-show { background: var(--p); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-print { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-
-        /* Sticky ID & Name columns */
-        .sticky-col { position: sticky; left: 0; background: #eee !important; z-index: 8; border-right: 2px solid #bbb !important; }
-        th.sticky-col { z-index: 10; top: 0; }
     </style>
 </head>
 <body>
@@ -77,7 +72,7 @@
         <table id="mainTable">
             <thead id="reportHeader"></thead>
             <tbody id="reportTableBody">
-                <tr><td style="padding:50px;">Click 'REFRESH SHEET' to load live data...</td></tr>
+                <tr><td colspan="30" style="padding:50px; text-align:center;">Click 'REFRESH SHEET' to load all collection data...</td></tr>
             </tbody>
             <tfoot id="reportFooter"></tfoot>
         </table>
@@ -98,21 +93,21 @@
             aDate = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`; 
         }
 
-        document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='20'>Loading Live Sheet...</td></tr>";
+        document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='30'>Loading Live Sheet... Please wait.</td></tr>";
 
         try {
             const res = await fetch(`${WEB_APP_URL}?action=getReportData&month=${month}`);
             const data = await res.json();
             
             if (!data.rows || data.rows.length === 0) {
-                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='20'>No data found for this month.</td></tr>";
+                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='30'>No data found for this selection.</td></tr>";
                 return;
             }
 
-            // 1. Get ALL headers from the first row of data
+            // 1. Get ALL headers from Sheet
             const headers = Object.keys(data.rows[0]);
 
-            // 2. Filter rows by Date if selected
+            // 2. Filter rows
             let rows = data.rows.filter(r => {
                 if(!sDate) return true;
                 let rd = r.date || r["Paid Date"] || r["Date"] || "";
@@ -122,34 +117,41 @@
             // 3. Build Header
             let hHtml = "<tr>";
             headers.forEach((h, i) => {
-                let cls = (i === 0 || i === 2) ? "sticky-col" : ""; // ID and Name sticky
+                let cls = "";
+                if(i === 0) cls = "sticky-id";
+                if(i === 2) cls = "sticky-name";
                 hHtml += `<th class="${cls}">${h}</th>`;
             });
             hHtml += "</tr>";
             document.getElementById('reportHeader').innerHTML = hHtml;
 
-            // 4. Build Body & Calc Totals
+            // 4. Build Body & Calculate Totals for EVERY numeric column
             let bHtml = "";
             let sums = {};
             headers.forEach(h => sums[h] = 0);
 
-            rows.forEach(r => {
+            rows.forEach(row => {
                 bHtml += "<tr>";
                 headers.forEach((h, i) => {
-                    let val = r[h] || "";
-                    let cls = (i === 0 || i === 2) ? "sticky-col" : "";
+                    let val = row[h] === undefined || row[h] === null ? "" : row[h];
+                    let cls = "";
+                    if(i === 0) cls = "sticky-id";
+                    if(i === 2) cls = "sticky-name";
                     
-                    // Style specific columns
                     let style = "";
                     if(h.toLowerCase().includes("paid")) style = "color: green; font-weight:bold;";
-                    if(h.toLowerCase().includes("rem") || h.toLowerCase().includes("bal")) style = "color: red; font-weight:bold;";
+                    if(h.toLowerCase().includes("bal") || h.toLowerCase().includes("due")) style = "color: red; font-weight:bold;";
                     
                     bHtml += `<td class="${cls}" style="${style}">${val}</td>`;
                     
-                    // Add to sum if numeric
-                    let num = parseFloat(val);
-                    if(!isNaN(num) && !["id", "student id", "class", "roll"].includes(h.toLowerCase())) {
-                        sums[h] += num;
+                    // Logic to sum EVERY column that contains a number
+                    // We skip ID, Name, Class, and Date columns for summing
+                    let skipList = ["id", "student id", "class", "name", "student name", "date", "paid date", "father name", "address", "month"];
+                    if(!skipList.includes(h.toLowerCase())) {
+                        let num = parseFloat(val);
+                        if(!isNaN(num)) {
+                            sums[h] += num;
+                        }
                     }
                 });
                 bHtml += "</tr>";
@@ -159,19 +161,28 @@
             // 5. Build Footer (Grand Total Row)
             let fHtml = "<tr class='total-row'>";
             headers.forEach((h, i) => {
-                let cls = (i === 0 || i === 2) ? "sticky-col" : "";
+                let cls = "";
+                if(i === 0) cls = "sticky-id";
+                if(i === 2) cls = "sticky-name";
+
                 if(i === 0) fHtml += `<td class="${cls}">TOTAL</td>`;
-                else if (i === 1) fHtml += `<td class="${cls}">-</td>`;
-                else if (i === 2) fHtml += `<td class="${cls}">${rows.length} Students</td>`;
+                else if (i === 2) fHtml += `<td class="${cls}">${rows.length} Stud.</td>`;
                 else {
-                    fHtml += `<td>${sums[h] > 0 ? "₹" + sums[h].toFixed(0) : "-"}</td>`;
+                    let skipList = ["id", "student id", "class", "name", "student name", "date", "paid date", "father name", "address", "month"];
+                    if(skipList.includes(h.toLowerCase())) {
+                        fHtml += `<td class="${cls}">-</td>`;
+                    } else {
+                        // Agar total 0 se zyada hai to hi dikhaye
+                        fHtml += `<td>${sums[h] !== 0 ? sums[h].toFixed(0) : "0"}</td>`;
+                    }
                 }
             });
             fHtml += "</tr>";
             document.getElementById('reportFooter').innerHTML = fHtml;
 
         } catch (e) {
-            document.getElementById('reportTableBody').innerHTML = "<tr><td>Error loading data.</td></tr>";
+            console.error(e);
+            document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='30'>Error loading data. Check Web App URL.</td></tr>";
         }
     }
 </script>
