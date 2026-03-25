@@ -7,35 +7,57 @@
         :root { --p: #1a237e; --bg: #f4f7f6; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 98%; margin: auto; }
+        
+        /* Header & Filters */
+        .header-box { text-align: center; margin-bottom: 15px; }
         .filter-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; align-items: flex-end; background: #f8f9fa; padding: 15px; border-radius: 8px; }
         .f-group { display: flex; flex-direction: column; }
         label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 5px; }
         select, input { padding: 8px; border-radius: 6px; border: 1px solid #ccc; outline: none; font-size: 13px; }
         
-        /* Table Styles */
-        .t-wrap { overflow-x: auto; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        /* Full Sheet Style Table */
+        .t-wrap { overflow-x: auto; height: 70vh; border: 1px solid #ccc; background: #fff; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
-        th { background: var(--p); color: white; padding: 10px; border: 1px solid #ddd; position: sticky; top: 0; z-index: 5; }
-        td { padding: 8px; border: 1px solid #ddd; background: #fff; text-align: center; }
         
-        /* Total Row Styling */
-        .total-row td { background: #fff9c4; font-weight: bold; color: #000; border-top: 2px solid #000; }
+        /* Google Sheet Style Headers */
+        th { 
+            background: #e8eaed; color: #333; padding: 8px 12px; 
+            border: 1px solid #ccc; position: sticky; top: 0; z-index: 5;
+            font-weight: 600; text-transform: capitalize;
+        }
+        
+        td { padding: 6px 12px; border: 1px solid #ddd; text-align: center; background: #fff; }
+        
+        /* Row Highlighting */
+        tr:nth-child(even) td { background: #f9f9f9; }
+        tr:hover td { background: #e3f2fd !important; }
+
+        /* Total Row (Live Footer) */
+        .total-row td { 
+            background: #fbbc04 !important; /* Google Yellow */
+            font-weight: bold; color: #000; 
+            position: sticky; bottom: 0; z-index: 6;
+            border-top: 2px solid #333;
+        }
+        
         .btn-show { background: var(--p); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        
-        /* Sticky Columns for mobile scrolling */
-        .sticky-col { position: sticky; left: 0; background: #fff !important; z-index: 10; border-right: 2px solid #ddd !important; }
-        th.sticky-col { background: var(--p) !important; z-index: 11; }
-        td.sticky-col.name-col { left: 45px; } /* ID column width ~45px */
+        .btn-print { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        /* Sticky ID & Name columns */
+        .sticky-col { position: sticky; left: 0; background: #eee !important; z-index: 8; border-right: 2px solid #bbb !important; }
+        th.sticky-col { z-index: 10; top: 0; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h3 style="text-align:center; color:var(--p); margin: 0 0 15px 0;">Sagar Public School - Collection Report</h3>
+    <div class="header-box">
+        <h3 style="margin:0; color:var(--p);">SPS LIVE COLLECTION SHEET</h3>
+    </div>
     
     <div class="filter-row no-print">
         <div class="f-group">
-            <label>1. SELECT MONTH</label>
+            <label>SELECT MONTH</label>
             <select id="monthInput">
                 <option>January</option><option>February</option><option>March</option>
                 <option>April</option><option>May</option><option>June</option>
@@ -44,18 +66,18 @@
             </select>
         </div>
         <div class="f-group">
-            <label>2. PICK DATE (Daily Filter)</label>
+            <label>DAILY DATE (Optional)</label>
             <input type="date" id="dateInput">
         </div>
-        <button class="btn-show" onclick="loadReport()">SHOW REPORT</button>
-        <button class="btn-show" style="background:#2e7d32;" onclick="window.print()">PRINT/SAVE</button>
+        <button class="btn-show" onclick="loadReport()">REFRESH SHEET</button>
+        <button class="btn-print" onclick="window.print()">PRINT</button>
     </div>
 
     <div class="t-wrap">
         <table id="mainTable">
             <thead id="reportHeader"></thead>
             <tbody id="reportTableBody">
-                <tr><td style="padding:20px; color:#666; text-align:center;">Select filters and click Show Report</td></tr>
+                <tr><td style="padding:50px;">Click 'REFRESH SHEET' to load live data...</td></tr>
             </tbody>
             <tfoot id="reportFooter"></tfoot>
         </table>
@@ -66,111 +88,90 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzLK7x1LSLSzKqPiQOBT1-3h1SyG8hqmRAOoUdzJaYJ8s4MRQGPzv4Uf2c_yJreh-41/exec";
 
     async function loadReport() {
-        let selectedMonth = document.getElementById('monthInput').value;
-        let selectedDate = document.getElementById('dateInput').value; 
+        let month = document.getElementById('monthInput').value;
+        let sDate = document.getElementById('dateInput').value; 
         
-        let formattedDate = "";
-        let altDate = "";
-        if(selectedDate) {
-            let d = selectedDate.split("-");
-            formattedDate = `${d[2]}/${d[1]}/${d[0]}`; 
-            altDate = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`; 
+        let fDate = "", aDate = "";
+        if(sDate) {
+            let d = sDate.split("-");
+            fDate = `${d[2]}/${d[1]}/${d[0]}`; 
+            aDate = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`; 
         }
 
-        document.getElementById('reportTableBody').innerHTML = "<tr><td style='text-align:center'>Searching... Please wait</td></tr>";
-        document.getElementById('reportHeader').innerHTML = "";
-        document.getElementById('reportFooter').innerHTML = "";
+        document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='20'>Loading Live Sheet...</td></tr>";
 
         try {
-            const response = await fetch(`${WEB_APP_URL}?action=getReportData&month=${selectedMonth}`);
-            const data = await response.json();
+            const res = await fetch(`${WEB_APP_URL}?action=getReportData&month=${month}`);
+            const data = await res.json();
             
             if (!data.rows || data.rows.length === 0) {
-                document.getElementById('reportTableBody').innerHTML = "<tr><td style='color:orange; text-align:center'>Is mahine ka koi record nahi mila.</td></tr>";
+                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='20'>No data found for this month.</td></tr>";
                 return;
             }
 
-            // 1. Identification of Dynamic Columns
-            // Hum pehle row ki keys uthate hain jo Sheet ke headers hain
-            const allKeys = Object.keys(data.rows[0]);
-            // Kuch columns hum ignore kar sakte hain agar zaroori ho
-            const excludeHeaders = ["date", "Paid Date", "Date"];
-            const displayKeys = allKeys.filter(k => !excludeHeaders.includes(k));
+            // 1. Get ALL headers from the first row of data
+            const headers = Object.keys(data.rows[0]);
 
-            // 2. Row Filtering Logic
-            let filteredRows = data.rows.filter(r => {
-                if(!selectedDate) return true;
-                // backend date field ka naam check karein
-                let rowDate = r.date || r["Paid Date"] || r["Date"] || "";
-                return (rowDate === formattedDate || rowDate === altDate || rowDate === selectedDate);
+            // 2. Filter rows by Date if selected
+            let rows = data.rows.filter(r => {
+                if(!sDate) return true;
+                let rd = r.date || r["Paid Date"] || r["Date"] || "";
+                return (rd === fDate || rd === aDate || rd === sDate);
             });
 
-            if(filteredRows.length === 0) {
-                document.getElementById('reportTableBody').innerHTML = "<tr><td colspan='100' style='color:orange; text-align:center'>Is Taarikh ka koi data nahi mila.</td></tr>";
-                return;
-            }
-
-            // 3. Render Table Header
-            let headHtml = "<tr>";
-            displayKeys.forEach((k, index) => {
-                let stickyClass = "";
-                if(index === 0) stickyClass = "sticky-col"; // ID sticky
-                if(index === 1) stickyClass = "sticky-col name-col"; // Name sticky
-                headHtml += `<th class="${stickyClass}">${k}</th>`;
+            // 3. Build Header
+            let hHtml = "<tr>";
+            headers.forEach((h, i) => {
+                let cls = (i === 0 || i === 2) ? "sticky-col" : ""; // ID and Name sticky
+                hHtml += `<th class="${cls}">${h}</th>`;
             });
-            headHtml += "</tr>";
-            document.getElementById('reportHeader').innerHTML = headHtml;
+            hHtml += "</tr>";
+            document.getElementById('reportHeader').innerHTML = hHtml;
 
-            // 4. Render Body & Calculate dynamic totals
-            let bodyHtml = "";
-            let totals = {};
-            displayKeys.forEach(k => totals[k] = 0); // Initialize totals
+            // 4. Build Body & Calc Totals
+            let bHtml = "";
+            let sums = {};
+            headers.forEach(h => sums[h] = 0);
 
-            filteredRows.forEach(r => {
-                bodyHtml += "<tr>";
-                displayKeys.forEach((k, index) => {
-                    let val = r[k] || 0;
-                    let stickyClass = "";
-                    if(index === 0) stickyClass = "sticky-col";
-                    if(index === 1) stickyClass = "sticky-col name-col";
+            rows.forEach(r => {
+                bHtml += "<tr>";
+                headers.forEach((h, i) => {
+                    let val = r[h] || "";
+                    let cls = (i === 0 || i === 2) ? "sticky-col" : "";
                     
-                    // Column specific styling
+                    // Style specific columns
                     let style = "";
-                    if(k === "Student Name" || k === "Name") style = 'style="text-align:left; font-weight:600; color:blue;"';
-                    if(k === "Total Paid" || k === "Paid") style = 'style="color:green; font-weight:bold;"';
-                    if(k === "Remaining" || k === "Balance") style = 'style="color:red; font-weight:bold;"';
-
-                    bodyHtml += `<td class="${stickyClass}" ${style}>${val}</td>`;
+                    if(h.toLowerCase().includes("paid")) style = "color: green; font-weight:bold;";
+                    if(h.toLowerCase().includes("rem") || h.toLowerCase().includes("bal")) style = "color: red; font-weight:bold;";
                     
-                    // Calculation logic: Agar value number hai aur yeh system column nahi hai
-                    if(!isNaN(parseFloat(val)) && k !== "Student Id" && k !== "id" && k !== "Class" && k !== "class") {
-                        totals[k] += parseFloat(val);
+                    bHtml += `<td class="${cls}" style="${style}">${val}</td>`;
+                    
+                    // Add to sum if numeric
+                    let num = parseFloat(val);
+                    if(!isNaN(num) && !["id", "student id", "class", "roll"].includes(h.toLowerCase())) {
+                        sums[h] += num;
                     }
                 });
-                bodyHtml += "</tr>";
+                bHtml += "</tr>";
             });
-            document.getElementById('reportTableBody').innerHTML = bodyHtml;
+            document.getElementById('reportTableBody').innerHTML = bHtml;
 
-            // 5. Render Footer (Yellow Row for Grand Totals)
-            let footHtml = "<tr class='total-row'>";
-            displayKeys.forEach((k, index) => {
-                let stickyClass = "";
-                if(index === 0) stickyClass = "sticky-col";
-                if(index === 1) stickyClass = "sticky-col name-col";
-
-                if(index === 0) footHtml += `<td class="${stickyClass}">TOTAL</td>`;
-                else if(index === 1) footHtml += `<td class="${stickyClass}">${filteredRows.length} Students</td>`;
+            // 5. Build Footer (Grand Total Row)
+            let fHtml = "<tr class='total-row'>";
+            headers.forEach((h, i) => {
+                let cls = (i === 0 || i === 2) ? "sticky-col" : "";
+                if(i === 0) fHtml += `<td class="${cls}">TOTAL</td>`;
+                else if (i === 1) fHtml += `<td class="${cls}">-</td>`;
+                else if (i === 2) fHtml += `<td class="${cls}">${rows.length} Students</td>`;
                 else {
-                    let totalVal = totals[k];
-                    footHtml += `<td>${totalVal > 0 ? "₹" + totalVal.toFixed(0) : "-"}</td>`;
+                    fHtml += `<td>${sums[h] > 0 ? "₹" + sums[h].toFixed(0) : "-"}</td>`;
                 }
             });
-            footHtml += "</tr>";
-            document.getElementById('reportFooter').innerHTML = footHtml;
+            fHtml += "</tr>";
+            document.getElementById('reportFooter').innerHTML = fHtml;
 
         } catch (e) {
-            console.error(e);
-            document.getElementById('reportTableBody').innerHTML = "<tr><td style='color:red; text-align:center'>Error fetching data. URL ya network check karein.</td></tr>";
+            document.getElementById('reportTableBody').innerHTML = "<tr><td>Error loading data.</td></tr>";
         }
     }
 </script>
