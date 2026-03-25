@@ -12,15 +12,19 @@
         .filter-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; justify-content: center; align-items: flex-end; background: #f8f9fa; padding: 10px; border-radius: 8px; }
         .f-group { display: flex; flex-direction: column; }
         label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 3px; }
-        select, input { padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 12px; outline: none; }
+        select, input { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 12px; outline: none; }
+        
+        /* Search Box Styling */
+        .search-box { flex-grow: 1; min-width: 200px; border: 2px solid var(--p) !important; background: #fff; }
+        
         .btn { background: var(--p); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .btn-print { background: #2e7d32; }
 
-        /* Full Dynamic Table Wrapper */
-        .t-wrap { overflow: auto; height: 80vh; border: 1px solid #ddd; position: relative; }
+        /* --- 100% DYNAMIC STICKY TABLE SETTINGS --- */
+        .t-wrap { overflow: auto; height: 75vh; border: 1px solid #ddd; position: relative; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 11px; white-space: nowrap; }
         
-        /* 1. TOP HEADER STICKY (Naya badlav) */
+        /* TOP HEADER STICKY */
         thead th { 
             background: #1a237e; color: #ffffff; padding: 10px 12px; 
             border: 1px solid #ddd; position: sticky; top: 0; z-index: 100;
@@ -28,18 +32,14 @@
         
         td { padding: 6px 10px; border: 1px solid #ddd; text-align: center; background: #fff; }
 
-        /* 2. LEFT COLUMNS STICKY (ID, Name, Father Name) */
-        /* Student ID (Col 1) */
-        .st-id { position: sticky; left: 0; z-index: 50; background: #f1f1f1 !important; border-right: 1px solid #ccc !important; }
-        /* Student Name (Col 3) - Index 2 */
-        .st-name { position: sticky; left: 50px; z-index: 50; background: #f1f1f1 !important; border-right: 1px solid #ccc !important; }
-        /* Father Name (Col 4) - Index 3 */
-        .st-father { position: sticky; left: 160px; z-index: 50; background: #f1f1f1 !important; border-right: 2px solid #bbb !important; }
+        /* STICKY CLASSES */
+        .sticky-id { position: sticky; left: 0; z-index: 50; background: #f1f1f1 !important; border-right: 1px solid #ccc !important; }
+        .sticky-name { position: sticky; left: 55px; z-index: 50; background: #f1f1f1 !important; border-right: 1px solid #ccc !important; }
+        .sticky-father { position: sticky; left: 165px; z-index: 50; background: #f1f1f1 !important; border-right: 2px solid #bbb !important; }
 
-        /* Corner Sticky (Headers jo sticky columns ke upar hain) */
-        th.st-id, th.st-name, th.st-father { z-index: 110; top: 0; }
+        th.sticky-id, th.sticky-name, th.sticky-father { z-index: 110; top: 0; }
 
-        /* 3. BOTTOM FOOTER STICKY (TOTAL ROW) */
+        /* FOOTER STICKY */
         .total-row td { 
             background: #ffc107 !important; font-weight: bold; color: #000; 
             position: sticky; bottom: 0; z-index: 90;
@@ -55,7 +55,7 @@
 <body>
 
 <div class="card">
-    <h4 style="text-align:center; color:var(--p); margin: 5px 0;">SPS MASTER COLLECTION REPORT (Live Sheet)</h4>
+    <h4 style="text-align:center; color:var(--p); margin: 5px 0;">SPS MASTER COLLECTION REPORT</h4>
     
     <div class="filter-row no-print">
         <div class="f-group">
@@ -71,15 +71,20 @@
             <label>DATE (Optional)</label>
             <input type="date" id="dateInput">
         </div>
+        <div class="f-group" style="flex-grow: 1;">
+            <label>LIVE FILTER (Name, Class, ID...)</label>
+            <input type="text" id="liveSearch" class="search-box" placeholder="Type to filter..." onkeyup="applyFilter()">
+        </div>
+        
         <button class="btn" onclick="loadFullSheet()">REFRESH LIVE DATA</button>
-        <button class="btn btn-print" onclick="window.print()">PRINT REPORT</button>
+        <button class="btn btn-print" onclick="window.print()">PRINT</button>
     </div>
 
     <div class="t-wrap">
         <table id="masterTable">
             <thead id="headerRow"></thead>
             <tbody id="tableBody">
-                <tr><td colspan="40" style="padding:40px;">Please click 'REFRESH LIVE DATA' to sync with Google Sheet.</td></tr>
+                <tr><td colspan="50" style="padding:40px;">Syncing data from Google Sheet...</td></tr>
             </tbody>
             <tfoot id="footerRow"></tfoot>
         </table>
@@ -88,11 +93,11 @@
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyYXysJEju_Ljzj6m-FhMtbptuLFB3vAIHk7FHT3c8yuafwKFOuShroGickq8kZ7wYisg/exec";
+    let MASTER_DATA = []; // Original data store
 
     async function loadFullSheet() {
         const month = document.getElementById('monthInput').value;
         const dateVal = document.getElementById('dateInput').value;
-        
         let fDate = "", aDate = "";
         if(dateVal) {
             let d = dateVal.split("-");
@@ -100,95 +105,109 @@
             aDate = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`; 
         }
 
-        document.getElementById('tableBody').innerHTML = "<tr><td colspan='40'>Syncing with Google Sheet...</td></tr>";
+        document.getElementById('tableBody').innerHTML = "<tr><td colspan='50'>Syncing...</td></tr>";
 
         try {
             const res = await fetch(`${WEB_APP_URL}?action=getReportData&month=${month}`);
             const data = await res.json();
             
             if (!data.rows || data.rows.length === 0) {
-                document.getElementById('tableBody').innerHTML = "<tr><td colspan='40'>No records found.</td></tr>";
+                document.getElementById('tableBody').innerHTML = "<tr><td colspan='50'>No records found.</td></tr>";
                 return;
             }
 
-            const headers = Object.keys(data.rows[0]);
-
-            let filtered = data.rows.filter(r => {
+            // Store for live filtering
+            MASTER_DATA = data.rows.filter(r => {
                 if(!dateVal) return true;
-                let rowD = r.date || r["Paid Date"] || r["Date"] || "";
+                let rowD = r["Paid Date"] || r["Date"] || "";
                 return (rowD === fDate || rowD === aDate || rowD === dateVal);
             });
 
-            // --- Header Generation ---
-            let hHtml = "<tr>";
-            headers.forEach((h, i) => {
-                let cls = "";
-                if(i === 0) cls = "st-id";
-                if(i === 2) cls = "st-name";
-                if(i === 3) cls = "st-father"; // Father Name Column Sticky
-                hHtml += `<th class="${cls}">${h}</th>`;
-            });
-            hHtml += "</tr>";
-            document.getElementById('headerRow').innerHTML = hHtml;
-
-            // --- Body Generation ---
-            let bHtml = "";
-            let sums = {};
-            headers.forEach(h => sums[h] = 0);
-
-            filtered.forEach(row => {
-                bHtml += "<tr>";
-                headers.forEach((h, i) => {
-                    let val = row[h] === undefined || row[h] === null ? "" : row[h];
-                    let cls = "";
-                    if(i === 0) cls = "st-id";
-                    if(i === 2) cls = "st-name";
-                    if(i === 3) cls = "st-father";
-                    
-                    let style = "";
-                    if(h.toLowerCase().includes("paid")) style = "color: green; font-weight:bold;";
-                    if(h.toLowerCase().includes("bal") || h.toLowerCase().includes("rem")) style = "color: red; font-weight:bold;";
-                    
-                    bHtml += `<td class="${cls}" style="${style}">${val}</td>`;
-                    
-                    let skipFields = ["id", "student id", "class", "name", "student name", "father name", "address", "date", "paid date", "month"];
-                    if(!skipFields.includes(h.toLowerCase())) {
-                        let num = parseFloat(val);
-                        if(!isNaN(num)) sums[h] += num;
-                    }
-                });
-                bHtml += "</tr>";
-            });
-            document.getElementById('tableBody').innerHTML = bHtml;
-
-            // --- Footer Generation ---
-            let fHtml = "<tr class='total-row'>";
-            headers.forEach((h, i) => {
-                let cls = "";
-                if(i === 0) cls = "st-id";
-                if(i === 2) cls = "st-name";
-                if(i === 3) cls = "st-father";
-
-                if(i === 0) fHtml += `<td class="${cls}">TOTAL</td>`;
-                else if (h.toLowerCase().includes("name") && !h.toLowerCase().includes("father")) {
-                     fHtml += `<td class="${cls}">${filtered.length} Stud.</td>`;
-                }
-                else {
-                    let skipFields = ["id", "student id", "class", "father name", "address", "date", "paid date", "month"];
-                    if(skipFields.includes(h.toLowerCase())) {
-                        fHtml += `<td class="${cls}">-</td>`;
-                    } else {
-                        fHtml += `<td>${sums[h] !== 0 ? sums[h].toLocaleString() : "0"}</td>`;
-                    }
-                }
-            });
-            fHtml += "</tr>";
-            document.getElementById('footerRow').innerHTML = fHtml;
+            renderTable(MASTER_DATA);
 
         } catch (e) {
-            document.getElementById('tableBody').innerHTML = "<tr><td colspan='40'>Error: Connection failed.</td></tr>";
+            document.getElementById('tableBody').innerHTML = "<tr><td colspan='50'>Error: Connection failed.</td></tr>";
         }
     }
+
+    // 100% Dynamic Class Assigner
+    const getCls = (h) => {
+        let name = h.toLowerCase();
+        if(name === "student id" || name === "id") return "sticky-id";
+        if(name === "student name" || name === "name") return "sticky-name";
+        if(name === "father name" || name === "father's name") return "sticky-father";
+        return "";
+    };
+
+    function applyFilter() {
+        const query = document.getElementById('liveSearch').value.toLowerCase();
+        const filtered = MASTER_DATA.filter(row => {
+            return Object.values(row).some(val => 
+                String(val).toLowerCase().includes(query)
+            );
+        });
+        renderTable(filtered);
+    }
+
+    function renderTable(dataRows) {
+        if (dataRows.length === 0) {
+            document.getElementById('tableBody').innerHTML = "<tr><td colspan='50'>No matching records.</td></tr>";
+            document.getElementById('footerRow').innerHTML = "";
+            return;
+        }
+
+        const headers = Object.keys(dataRows[0]);
+
+        // Header Build
+        let hHtml = "<tr>";
+        headers.forEach(h => hHtml += `<th class="${getCls(h)}">${h}</th>`);
+        hHtml += "</tr>";
+        document.getElementById('headerRow').innerHTML = hHtml;
+
+        // Body & Sums
+        let bHtml = "";
+        let sums = {};
+        headers.forEach(h => sums[h] = 0);
+
+        dataRows.forEach(row => {
+            bHtml += "<tr>";
+            headers.forEach(h => {
+                let val = row[h] === undefined || row[h] === null ? "" : row[h];
+                let style = "";
+                if(h.toLowerCase().includes("paid")) style = "color: green; font-weight:bold;";
+                if(h.toLowerCase().includes("bal") || h.toLowerCase().includes("rem")) style = "color: red; font-weight:bold;";
+                
+                bHtml += `<td class="${getCls(h)}" style="${style}">${val}</td>`;
+                
+                let skipFields = ["id", "student id", "class", "name", "student name", "father name", "address", "date", "paid date", "month"];
+                if(!skipFields.includes(h.toLowerCase())) {
+                    let num = parseFloat(val);
+                    if(!isNaN(num)) sums[h] += num;
+                }
+            });
+            bHtml += "</tr>";
+        });
+        document.getElementById('tableBody').innerHTML = bHtml;
+
+        // Footer Build (Automatic Total for Filtered Results)
+        let fHtml = "<tr class='total-row'>";
+        headers.forEach((h, i) => {
+            let cls = getCls(h);
+            if(i === 0) fHtml += `<td class="${cls}">TOTAL</td>`;
+            else if (h.toLowerCase().includes("name") && !h.toLowerCase().includes("father")) {
+                fHtml += `<td class="${cls}">${dataRows.length} Stud.</td>`;
+            } else {
+                let skipFields = ["id", "student id", "class", "father name", "address", "date", "paid date", "month"];
+                if(skipFields.includes(h.toLowerCase())) fHtml += `<td class="${cls}">-</td>`;
+                else fHtml += `<td>${sums[h] !== 0 ? sums[h].toLocaleString() : "0"}</td>`;
+            }
+        });
+        fHtml += "</tr>";
+        document.getElementById('footerRow').innerHTML = fHtml;
+    }
+
+    // Auto load on first run
+    window.onload = loadFullSheet;
 </script>
 </body>
 </html>
