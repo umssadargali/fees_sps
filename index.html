@@ -244,13 +244,13 @@
         // Render Book rows
         let bookRows = document.querySelectorAll('tr[data-type="book"]');
         if(bookRows.length > 0) {
-            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Books</b></td></tr>`;
+            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Books & Other</b></td></tr>`;
             bookRows.forEach((row, i) => { rows += `<tr><td></td><td>(${roman(i+1)}) ${row.getAttribute('data-h')}</td><td align="center">${row.querySelector('.q-in').value}</td><td align="center">${row.querySelector('.a-in').value}</td></tr>`; });
         }
         // Render Other Fee rows
         let othRows = document.querySelectorAll('tr[data-type="oth"]');
         if(othRows.length > 0) {
-            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>Other Fees</b></td></tr>`;
+            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>Miscellaneous Fees</b></td></tr>`;
             othRows.forEach((row, i) => { rows += `<tr><td></td><td>(${roman(i+1)}) ${row.getAttribute('data-h')}</td><td align="center">${row.querySelector('.q-in').value}</td><td align="center">${row.querySelector('.a-in').value}</td></tr>`; });
         }
 
