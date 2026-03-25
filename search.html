@@ -131,14 +131,14 @@
         const bookKeys = ["Books Fee", "Copies", "Cover", "Instrument Box"];
         let hasBook = false; bookKeys.forEach(k => { if(d[k]>0) hasBook = true; });
         if(hasBook) {
-            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Books</b></td></tr>`;
+            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>School Books & Other</b></td></tr>`;
             bookKeys.forEach((k, i) => { if(d[k]>0) rows += `<tr><td></td><td>(${roman(i+1)}) ${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; });
         }
 
         const othKeys = ["Republic Day Fee", "Independence Day Fee", "UDISE Fee"];
         let hasOth = false; othKeys.forEach(k => { if(d[k]>0) hasOth = true; });
         if(hasOth) {
-            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>Other Fees</b></td></tr>`;
+            rows += `<tr><td align="center">${sl++}.</td><td colspan="3"><b>Miscellaneous Fees</b></td></tr>`;
             othKeys.forEach((k, i) => { if(d[k]>0) rows += `<tr><td></td><td>(${roman(i+1)}) ${k}</td><td align="center">1</td><td align="center">${d[k]}</td></tr>`; });
         }
 
